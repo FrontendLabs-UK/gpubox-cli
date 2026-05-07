@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# Virtualenvs
+.venv/
+venv/
+env/
+
+# Test + coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+coverage.xml
+*.cover
+
+# Editor
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Type checkers
+.mypy_cache/
+.ruff_cache/
+
+# Build / publish
+*.tgz
+*.whl
+.tmp/
