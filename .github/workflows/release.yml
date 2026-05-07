@@ -1,0 +1,66 @@
+name: Publish to PyPI
+
+# Tag a release commit with `v0.1.0` (or any `v*`) to trigger the build +
+# publish. Until PYPI_API_TOKEN is set as a repo secret AND the project
+# name is claimed on PyPI, the publish step will fail — the build step
+# itself proves the wheel is valid.
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Verify tag matches pyproject version
+        # Run AFTER setup-python so tomllib is guaranteed present (Codex R1).
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF##refs/tags/}"
+          tag_version="${tag#v}"
+          pyproject_version=$(python -c '
+          import sys, tomllib
+          with open("pyproject.toml", "rb") as f:
+              print(tomllib.load(f)["project"]["version"])
+          ')
+          if [ "$tag_version" != "$pyproject_version" ]; then
+            echo "::error::tag $tag (version $tag_version) does not match pyproject.toml version $pyproject_version" >&2
+            exit 1
+          fi
+          echo "tag and pyproject agree on version $pyproject_version"
+
+      - name: Install build tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Build sdist + wheel
+        run: python -m build
+
+      - name: Verify built artifacts
+        run: |
+          twine check dist/*
+          ls -la dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          # Until the project name is claimed on PyPI and PYPI_API_TOKEN is
+          # configured as a repo secret, this step will fail. The build +
+          # twine check above prove the wheel itself is valid.
+          skip-existing: true
