@@ -26,8 +26,12 @@ from gpubox_cli.client import ClientConfig, GPUBoxClient, GPUBoxError, exit_on_e
 from gpubox_cli.output import OutputCtx, emit_error, emit_json, emit_text
 
 #: Default model when neither --model nor a configured default is set.
-#: Tracks whatever GPUBox marks as "general default" on the dashboard.
-FALLBACK_MODEL = "gpubox/llama-3.1-8b-instruct"
+#: Pinned to qwen2.5-32b-instruct per the V1 Chat direction lock
+#: (2026-05-29): Qwen 2.5 32B is the default chat model on prod. The
+#: prior gpubox/llama-3.1-8b-instruct slug was never live on the gateway
+#: (gateway lists qwen2.5-32b-instruct + llama-3.3-70b-instruct as live)
+#: so every CLI call without --model was hitting a 404.
+FALLBACK_MODEL = "qwen2.5-32b-instruct"
 
 
 def _resolve_model(

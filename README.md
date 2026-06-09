@@ -4,10 +4,9 @@ Customer-facing CLI for [GPUBox](https://gpubox.ai) — UK-sovereign AI inferenc
 One binary, every endpoint: chat, embeddings, transcription, fine-tuning,
 hosting, vault search, custom assistants, SSO admin.
 
-> Status: **v0.1.0** — early access. Most endpoints follow GPUBox prod;
-> some (Vault, Assistants, SSO) require backend Waves 7.x to be merged.
-> See [Backend coordination](#backend-coordination) for which commands
-> need which backend PR.
+> Status: **v0.1.1** (early access). Every subcommand maps to a live
+> gateway endpoint on prod. See [Endpoint mapping](#endpoint-mapping) for
+> the full `gpb <command>` to `<METHOD> /v1/<path>` table.
 
 ---
 
@@ -135,22 +134,57 @@ URL on stderr — no half-streamed JSON blob to clean up.
 no opt-out toggle for telemetry that doesn't exist. If something breaks,
 run `gpb auth status -j` and paste the output into a GitHub issue.
 
-## Backend coordination
+## Endpoint mapping
 
-Some commands target endpoints that ship with backend Waves still in PR.
-The CLI is wired now so it Just Works the day each PR deploys; until
-then, those commands surface the gateway's 404.
+Every `gpb` subcommand below maps to a single gateway route. Paths are
+relative to the API base (default `https://api.gpubox.ai/v1`, override
+with `GPUBOX_API_URL` or `--base-url`). The gateway's full OpenAPI spec
+lives at `https://api.gpubox.ai/docs`.
 
-| Surface                       | Backend PR | State (as of 2026-05-07) |
-| ----------------------------- | ---------- | ------------------------ |
-| chat / embed / transcribe     | live       | works on prod            |
-| billing balance / topup       | live       | works on prod            |
-| training / hosting            | PR #6      | merge → CLI works        |
-| vault conversations           | PR #7      | merge → CLI works        |
-| guardrails                    | PR #8      | (no CLI yet — server-side)|
-| vault rag corpora             | PR #9      | merge → CLI works        |
-| assistants                    | PR #10     | merge → CLI works        |
-| users / oidc                  | PR #11     | merge → CLI works        |
+| CLI command                          | HTTP                          | Notes                                                |
+| ------------------------------------ | ----------------------------- | ---------------------------------------------------- |
+| `gpb chat`                           | POST `/v1/chat/completions`   | SSE stream in a TTY, buffered otherwise              |
+| `gpb embed`                          | POST `/v1/embeddings`         | default model `BAAI/bge-m3`                          |
+| `gpb transcribe`                     | POST `/v1/audio/transcriptions` | multipart upload; Whisper-compatible                 |
+| `gpb signup`                         | (browser)                     | opens `https://gpubox.ai/signup` (no API call)       |
+| `gpb auth login`                     | (local)                       | writes credentials file (mode 0600)                  |
+| `gpb auth status`                    | GET `/v1/auth/whoami`         | falls back to "unverified" on 404/405                |
+| `gpb auth logout`                    | (local)                       | clears API key, keeps base_url + default_model       |
+| `gpb profile list/use/remove`        | (local)                       | edits credentials/config files only                  |
+| `gpb config get/set`                 | (local)                       | edits `config.toml` only                             |
+| `gpb billing balance`                | GET `/v1/billing/balance`     |                                                      |
+| `gpb billing history`                | GET `/v1/billing/balance`     | reads `recent_topups` from balance                   |
+| `gpb billing topup --amount-gbp`     | POST `/v1/billing/checkout-sessions` | Stripe checkout (pence)                       |
+| `gpb billing topup --amount-ngn`     | POST `/v1/billing/paystack/initialize` | Paystack checkout (kobo)                    |
+| `gpb training submit`                | POST `/v1/training/runs`      | idempotent                                           |
+| `gpb training list`                  | GET `/v1/training/runs`       | `--status` filter, `--limit`                         |
+| `gpb training status <run_id>`       | GET `/v1/training/runs/{run_id}` |                                                  |
+| `gpb training watch <run_id>`        | GET `/v1/training/runs/{run_id}` | polls every `--interval` seconds                  |
+| `gpb training download <run_id>`     | GET `/v1/training/runs/{run_id}/artifact` | streams octet-stream to disk               |
+| `gpb training cancel <run_id>`       | POST `/v1/training/runs/{run_id}/cancel` |                                            |
+| `gpb hosting list`                   | GET `/v1/hosting/models`      |                                                      |
+| `gpb hosting promote <run_id>`       | POST `/v1/hosting/models`     | idempotent; `--tier cold/warm/always_hot`            |
+| `gpb hosting tier <model_id>`        | PATCH `/v1/hosting/models/{model_id}` |                                              |
+| `gpb hosting delete <model_id>`      | DELETE `/v1/hosting/models/{model_id}` |                                             |
+| `gpb vault enable`                   | POST `/v1/vault/enable`       | body `{"enabled": true}`                             |
+| `gpb vault disable`                  | POST `/v1/vault/enable`       | body `{"enabled": false}`                            |
+| `gpb vault search`                   | POST `/v1/vault/search`       | semantic search across vaulted conversations         |
+| `gpb vault conversations list`       | GET `/v1/vault/conversations` |                                                      |
+| `gpb vault conversations get <id>`   | GET `/v1/vault/conversations/{id}` |                                                 |
+| `gpb vault corpora list`             | GET `/v1/vault/corpora`       |                                                      |
+| `gpb vault corpora create`           | POST `/v1/vault/corpora`      | idempotent; `--from-file` then POSTs to `/v1/vault/corpora/{id}/upload` |
+| `gpb assistants list`                | GET `/v1/assistants`          |                                                      |
+| `gpb assistants create`              | POST `/v1/assistants`         | idempotent                                           |
+| `gpb assistants update <id>`         | PATCH `/v1/assistants/{id}`   |                                                      |
+| `gpb assistants run <id>`            | POST `/v1/assistants/{id}/runs` |                                                    |
+| `gpb assistants delete <id>`         | DELETE `/v1/assistants/{id}`  |                                                      |
+| `gpb users invite <email>`           | POST `/v1/tenants/{tenant_id}/users` | tenant from `--tenant` or `GPUBOX_TENANT_ID` |
+| `gpb users list`                     | GET `/v1/tenants/{tenant_id}/users` |                                               |
+| `gpb users oidc create`              | POST `/v1/oidc/clients`       | `redirect_uris` is a list                            |
+| `gpb users oidc list`                | GET `/v1/oidc/clients`        |                                                      |
+
+If a row doesn't match prod (404, schema drift), the gateway's
+OpenAPI is the source of truth. Open an issue with the diff.
 
 ## Design rationale (cdxk round-table)
 

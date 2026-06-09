@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "gpubox-cli"
-version = "0.1.0"
+version = "0.1.1"
 description = "Customer-facing CLI for GPUBox — UK-sovereign AI inference (api.gpubox.ai)"
 readme = "README.md"
 license = { text = "Apache-2.0" }
