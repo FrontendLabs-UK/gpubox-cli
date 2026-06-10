@@ -35,9 +35,10 @@ def _read_instructions(path: Path) -> str:
     return path.read_text(encoding="utf-8").strip()
 
 
-@app.command("list")
+@app.command("list", help="List custom assistants in the active tenant.")
 @exit_on_error
 def list_assistants(ctx: typer.Context) -> None:
+    """List custom assistants in the active tenant."""
     out = _output(ctx)
     with _client(ctx) as client:
         resp = client.request("GET", "/assistants")
@@ -48,7 +49,10 @@ def list_assistants(ctx: typer.Context) -> None:
         emit_text(out, f"{item.get('id','?'):<24} {item.get('name','?'):<32} {item.get('model','')}")
 
 
-@app.command("create")
+@app.command(
+    "create",
+    help="Create a custom assistant from a name and a prompt file.",
+)
 @exit_on_error
 def create_assistant(
     ctx: typer.Context,
@@ -58,6 +62,7 @@ def create_assistant(
     ),
     model: str | None = typer.Option(None, "--model"),
 ) -> None:
+    """Create a custom assistant from a name and a prompt file."""
     out = _output(ctx)
     body: dict = {"name": name, "instructions": _read_instructions(instructions)}
     if model:
@@ -70,7 +75,10 @@ def create_assistant(
     emit_text(out, f"created: {resp.get('id','?')}")
 
 
-@app.command("update")
+@app.command(
+    "update",
+    help="Update an assistant's name, model, or instructions file.",
+)
 @exit_on_error
 def update_assistant(
     ctx: typer.Context,
@@ -81,6 +89,7 @@ def update_assistant(
     name: str | None = typer.Option(None, "--name"),
     model: str | None = typer.Option(None, "--model"),
 ) -> None:
+    """Update an assistant's name, model, or instructions file."""
     out = _output(ctx)
     body: dict = {}
     if instructions:
@@ -123,9 +132,10 @@ def run_assistant(
     emit_text(out, str(text))
 
 
-@app.command("delete")
+@app.command("delete", help="Delete a custom assistant by id.")
 @exit_on_error
 def delete_assistant(ctx: typer.Context, assistant_id: str = typer.Argument(...)) -> None:
+    """Delete a custom assistant by id."""
     out = _output(ctx)
     with _client(ctx) as client:
         client.request("DELETE", f"/assistants/{assistant_id}")

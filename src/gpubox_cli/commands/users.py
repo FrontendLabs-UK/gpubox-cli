@@ -97,12 +97,13 @@ def invite_user(
     emit_text(out, f"invited {email} as {role}")
 
 
-@app.command("list")
+@app.command("list", help="List users in the active (or --tenant) tenant.")
 @exit_on_error
 def list_users(
     ctx: typer.Context,
     tenant: str | None = typer.Option(None, "--tenant", help="Tenant UUID."),
 ) -> None:
+    """List users in the active (or --tenant) tenant."""
     out = _output(ctx)
     tenant_id = _resolve_tenant(ctx, tenant)
     with _client(ctx) as client:
@@ -167,9 +168,10 @@ def create_client(
             )
 
 
-@oidc.command("list")
+@oidc.command("list", help="List OIDC clients registered for the tenant.")
 @exit_on_error
 def list_clients(ctx: typer.Context) -> None:
+    """List OIDC clients registered for the tenant."""
     out = _output(ctx)
     with _client(ctx) as client:
         resp = client.request("GET", "/oidc/clients")
