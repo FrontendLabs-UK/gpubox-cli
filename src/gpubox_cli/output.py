@@ -88,6 +88,28 @@ def emit_text(ctx: OutputCtx, text: str, *, end: str = "\n") -> None:
     sys.stdout.flush()
 
 
+def emit_progress(ctx: OutputCtx, text: str, *, end: str = "\n") -> None:
+    """Interim progress lines (e.g. ``training watch`` polling).
+
+    In ``--json`` mode stdout must carry exactly ONE JSON document (the
+    module-docstring lock: diagnostics → stderr, stdout reserved for the
+    command result), so progress is rerouted to stderr. In plain mode this
+    is byte-identical to ``emit_text``. ``--quiet`` suppresses either way.
+    """
+    if ctx.quiet:
+        return
+    stream = sys.stderr if ctx.json_mode else sys.stdout
+    stream.write(text)
+    stream.write(end)
+    stream.flush()
+
+
+def emit_warning(ctx: OutputCtx, message: str) -> None:
+    """Non-fatal diagnostics on stderr — same routing rationale as emit_error."""
+    console = make_console(ctx, stderr=True)
+    console.print(f"[bold yellow]warning:[/bold yellow] {message}")
+
+
 def emit_error(ctx: OutputCtx, message: str) -> None:
     """Diagnostics on stderr so stdout stays pipeable.
 
