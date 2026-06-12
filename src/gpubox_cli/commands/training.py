@@ -14,7 +14,7 @@ import typer
 
 from gpubox_cli import config as cfg
 from gpubox_cli.client import ClientConfig, GPUBoxClient, exit_on_error
-from gpubox_cli.output import OutputCtx, emit_error, emit_json, emit_text
+from gpubox_cli.output import OutputCtx, emit_error, emit_json, emit_progress, emit_text
 from gpubox_cli.version import USER_AGENT
 
 app = typer.Typer(no_args_is_help=True, help="Submit + monitor fine-tuning runs.")
@@ -130,8 +130,9 @@ def watch_run(
             resp = client.request("GET", f"/training/runs/{run_id}")
             state = (resp.get("status") or "").lower() if isinstance(resp, dict) else ""
             line = f"{run_id} status={state} progress={resp.get('progress','-')}"
-            if not out.quiet:
-                emit_text(out, line)
+            # Progress goes through emit_progress so --json keeps stdout as
+            # exactly one JSON document (progress reroutes to stderr there).
+            emit_progress(out, line)
             if state in _TERMINAL_STATES:
                 if out.json_mode:
                     emit_json(out, resp)

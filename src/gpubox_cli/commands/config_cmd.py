@@ -7,21 +7,84 @@ casually. Currently supported keys:
 * ``default_model``   — model id used when --model isn't passed
 
 Other keys are tucked into ``settings.extra`` for forward compatibility;
-unknown keys round-trip safely.
+unknown keys round-trip safely. Exception: key names that name a credential
+outright (api_key, auth_token, client_secret, password, ...) are refused,
+because config.toml is world-readable — `gpb auth login` is the secrets
+path. Names that merely contain a secret-ish fragment (tokenizer,
+keyring_backend) are stored with a stderr warning.
 """
 
 from __future__ import annotations
 
+import re
+
 import typer
 
 from gpubox_cli import config as cfg
-from gpubox_cli.output import OutputCtx, emit_error, emit_json, emit_text
+from gpubox_cli.output import OutputCtx, emit_error, emit_json, emit_text, emit_warning
 
 app = typer.Typer(no_args_is_help=True, help="Read / write CLI config.")
 
 # Allowlist of "first-class" config keys. Unknown keys still work via
 # settings.extra but won't render through `gpb config get` without a key arg.
 _KNOWN_KEYS = {"active_profile", "default_model"}
+
+# Secret-looking key names are refused outright: config.toml is intentionally
+# world-readable (0644), so `gpb config set api_key ...` would write a secret
+# where every local user can read it. Credentials belong in credentials.toml
+# (0600) via `gpb auth login`.
+#
+# Two-tier match (Codex review: extras are a documented forward-compat
+# surface, so a blunt substring hard-block would also kill innocent keys
+# like `tokenizer`, `monkey`, or a future v0.2 `keyring_backend`):
+#
+# * HARD BLOCK when a whole word of the key (split on separators and
+#   camelCase) is a credential noun — api_key, authToken, client-secret,
+#   APIKEY, db_password all land here. Exit 2.
+# * WARN-ONLY when a fragment merely appears inside a longer word
+#   (tokenizer, keyring_backend): stored as requested, with a stderr nudge
+#   towards `gpb auth login` in case it really is a credential.
+#
+# None of today's legitimate keys (active_profile, default_model,
+# tenant_id) trip either tier.
+_SECRET_KEY_TOKENS = {
+    "key",
+    "apikey",
+    "token",
+    "secret",
+    "password",
+    "passwd",
+    "credential",
+    "credentials",
+}
+_SECRET_KEY_FRAGMENTS = ("key", "token", "secret", "password")
+
+
+def _key_words(key: str) -> list[str]:
+    """Split a key name into lowercase words on separators + camelCase.
+
+    The second alternative handles acronym boundaries (DBPassword, APIToken,
+    clientIDSecret) — an upper run followed by Upper+lower starts a new word.
+    """
+    decamelled = re.sub(r"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])", "_", key)
+    return [word for word in re.split(r"[^a-zA-Z0-9]+", decamelled.lower()) if word]
+
+
+def _secret_token(key: str) -> str | None:
+    """Return the credential noun when *key* names a secret outright."""
+    for word in _key_words(key):
+        if word in _SECRET_KEY_TOKENS:
+            return word
+    return None
+
+
+def _secret_fragment(key: str) -> str | None:
+    """Return the matched fragment when *key* merely smells like a secret."""
+    lowered = key.lower()
+    for fragment in _SECRET_KEY_FRAGMENTS:
+        if fragment in lowered:
+            return fragment
+    return None
 
 
 def _output(ctx: typer.Context) -> OutputCtx:
@@ -68,6 +131,22 @@ def set_value(
 ) -> None:
     """Set one config value. Use `gpb profile use <name>` for active profile."""
     out = _output(ctx)
+    token = _secret_token(key)
+    if token is not None:
+        emit_error(
+            out,
+            f"refusing to store '{key}' (names a '{token}'): config.toml "
+            "is world-readable (0644), so secrets don't belong there. "
+            "run `gpb auth login` to store credentials safely (0600).",
+        )
+        raise typer.Exit(2)
+    if _secret_fragment(key) is not None:
+        emit_warning(
+            out,
+            f"'{key}' looks like it could name a credential. config.toml is "
+            "world-readable (0644) — if this value is a secret, remove it and "
+            "use `gpb auth login` instead.",
+        )
     settings = cfg.load_settings()
     if key == "active_profile":
         settings.active_profile = value
