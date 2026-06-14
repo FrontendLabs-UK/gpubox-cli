@@ -108,9 +108,9 @@ gpb signup
 gpb billing balance|topup|history
 gpb training submit|list|status|watch|download|cancel
 gpb hosting list|promote|tier|delete
-gpb vault enable|disable|search
-gpb vault conversations list|get
-gpb vault corpora list|create
+gpb vault enable|disable|search          # enable/disable are operator-only (no public route)
+gpb vault conversations list|get|delete
+gpb vault corpora list|get|create|delete
 gpb assistants list|create|update|run|delete
 gpb users invite|list
 gpb users oidc create|list
@@ -166,13 +166,16 @@ lives at `https://api.gpubox.ai/docs`.
 | `gpb hosting promote <run_id>`       | POST `/v1/hosting/models`     | idempotent; `--tier cold/warm/always_hot`            |
 | `gpb hosting tier <model_id>`        | PATCH `/v1/hosting/models/{model_id}` |                                              |
 | `gpb hosting delete <model_id>`      | DELETE `/v1/hosting/models/{model_id}` |                                             |
-| `gpb vault enable`                   | POST `/v1/vault/enable`       | body `{"enabled": true}`                             |
-| `gpb vault disable`                  | POST `/v1/vault/enable`       | body `{"enabled": false}`                            |
-| `gpb vault search`                   | POST `/v1/vault/search`       | semantic search across vaulted conversations         |
-| `gpb vault conversations list`       | GET `/v1/vault/conversations` |                                                      |
-| `gpb vault conversations get <id>`   | GET `/v1/vault/conversations/{id}` |                                                 |
-| `gpb vault corpora list`             | GET `/v1/vault/corpora`       |                                                      |
-| `gpb vault corpora create`           | POST `/v1/vault/corpora`      | idempotent; `--from-file` then POSTs to `/v1/vault/corpora/{id}/upload` |
+| `gpb vault enable`                   | (none — operator-only)        | no public route; prints "email support@gpubox.ai"    |
+| `gpb vault disable`                  | (none — operator-only)        | no public route; prints "email support@gpubox.ai"    |
+| `gpb vault search`                   | POST `/v1/conversations/search` | keyword FTS (`--mode fts`/`substring`), not semantic |
+| `gpb vault conversations list`       | GET `/v1/conversations`       |                                                      |
+| `gpb vault conversations get <id>`   | GET `/v1/conversations/{id}` (+ `/messages`) | metadata + message history             |
+| `gpb vault conversations delete <id>`| DELETE `/v1/conversations/{id}` | soft-delete                                        |
+| `gpb vault corpora list`             | GET `/v1/corpora`             |                                                      |
+| `gpb vault corpora get <id>`         | GET `/v1/corpora/{id}`        |                                                      |
+| `gpb vault corpora delete <id>`      | DELETE `/v1/corpora/{id}`     | soft-delete                                          |
+| `gpb vault corpora create`           | POST `/v1/corpora`            | `{name, source_type, content}`; `--from-file` PDF → multipart `/v1/corpora/upload` |
 | `gpb assistants list`                | GET `/v1/assistants`          |                                                      |
 | `gpb assistants create`              | POST `/v1/assistants`         | idempotent                                           |
 | `gpb assistants update <id>`         | PATCH `/v1/assistants/{id}`   |                                                      |
