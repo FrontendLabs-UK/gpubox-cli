@@ -80,3 +80,125 @@ def test_chat_network_error_returns_clean_exit(
     result = runner.invoke(app, ["--json", "chat", "hi"])
     assert result.exit_code == 1
     assert "could not reach" in result.stderr.lower() or "network" in result.stderr.lower()
+
+
+# ---------------------------------------------------------------------------
+# Vision / --image (multimodal) — added 2026-06-19 with the gateway VL model.
+# ---------------------------------------------------------------------------
+
+
+@respx.mock
+def test_chat_image_auto_routes_to_vision_model(
+    runner: CliRunner, authed_profile: str, tmp_path
+) -> None:
+    """--image with no --model auto-switches to the VL model and sends
+    OpenAI-compatible multimodal content (text part + inline data-URI)."""
+    img = tmp_path / "shot.png"
+    img.write_bytes(b"\x89PNG\r\n\x1a\nfakebytes")
+    route = respx.post(f"{BASE}/chat/completions").mock(
+        return_value=httpx.Response(
+            200, json={"choices": [{"message": {"content": "a red square"}}]}
+        )
+    )
+    result = runner.invoke(app, ["--json", "chat", "what is this?", "-I", str(img)])
+    assert result.exit_code == 0, result.stderr
+    body = json.loads(route.calls.last.request.content)
+    assert body["model"] == "qwen2.5-vl-7b-instruct"
+    content = body["messages"][-1]["content"]
+    assert content[0] == {"type": "text", "text": "what is this?"}
+    assert content[1]["type"] == "image_url"
+    assert content[1]["image_url"]["url"].startswith("data:image/png;base64,")
+
+
+@respx.mock
+def test_chat_image_respects_explicit_model(
+    runner: CliRunner, authed_profile: str, tmp_path
+) -> None:
+    """An explicit --model is never overridden by the vision auto-route."""
+    img = tmp_path / "shot.jpg"
+    img.write_bytes(b"\xff\xd8\xfffake")
+    route = respx.post(f"{BASE}/chat/completions").mock(
+        return_value=httpx.Response(200, json={"choices": [{"message": {"content": "ok"}}]})
+    )
+    result = runner.invoke(
+        app, ["--json", "chat", "hi", "-I", str(img), "-m", "my-custom-vl"]
+    )
+    assert result.exit_code == 0, result.stderr
+    body = json.loads(route.calls.last.request.content)
+    assert body["model"] == "my-custom-vl"
+
+
+@respx.mock
+def test_chat_image_url_passthrough(runner: CliRunner, authed_profile: str) -> None:
+    """An https image URL is passed through verbatim (no base64 wrap)."""
+    route = respx.post(f"{BASE}/chat/completions").mock(
+        return_value=httpx.Response(200, json={"choices": [{"message": {"content": "ok"}}]})
+    )
+    url = "https://example.com/diagram.png"
+    result = runner.invoke(app, ["--json", "chat", "describe", "-I", url])
+    assert result.exit_code == 0, result.stderr
+    body = json.loads(route.calls.last.request.content)
+    assert body["messages"][-1]["content"][1]["image_url"]["url"] == url
+
+
+@respx.mock
+def test_chat_image_empty_prompt_defaults_text(
+    runner: CliRunner, authed_profile: str, tmp_path
+) -> None:
+    """`gpb chat -I img` with no prompt sends a sensible default instruction
+    (so an image-only invocation isn't rejected as a missing prompt)."""
+    img = tmp_path / "x.png"
+    img.write_bytes(b"bytes")
+    route = respx.post(f"{BASE}/chat/completions").mock(
+        return_value=httpx.Response(200, json={"choices": [{"message": {"content": "ok"}}]})
+    )
+    result = runner.invoke(app, ["--json", "chat", "-I", str(img)])
+    assert result.exit_code == 0, result.stderr
+    body = json.loads(route.calls.last.request.content)
+    assert body["messages"][-1]["content"][0]["text"] == "Describe this image."
+
+
+def test_chat_missing_image_errors(runner: CliRunner, authed_profile: str) -> None:
+    """A missing image path fails clean (non-zero, no traceback, helpful msg)
+    BEFORE any network call."""
+    result = runner.invoke(app, ["chat", "hi", "-I", "/no/such/image.png"])
+    assert result.exit_code != 0
+    assert "image not found" in (result.stdout + result.stderr).lower()
+
+
+def test_chat_image_size_cap(
+    runner: CliRunner, authed_profile: str, tmp_path, monkeypatch
+) -> None:
+    """A local image over MAX_IMAGE_BYTES fails clean before any base64/network."""
+    from gpubox_cli.commands import chat as chat_mod
+
+    monkeypatch.setattr(chat_mod, "MAX_IMAGE_BYTES", 4)
+    big = tmp_path / "big.png"
+    big.write_bytes(b"this is more than four bytes")
+    result = runner.invoke(app, ["chat", "hi", "-I", str(big)])
+    assert result.exit_code != 0
+    assert "too large" in (result.stdout + result.stderr).lower()
+
+
+def test_image_content_part_and_vision_detect(tmp_path) -> None:
+    """Unit cover for the image helper + vision-model heuristic."""
+    import pytest as _pytest
+
+    from gpubox_cli.client import GPUBoxError
+    from gpubox_cli.commands.chat import _image_content_part, _is_vision_model
+
+    assert _image_content_part("https://x/y.png")["image_url"]["url"] == "https://x/y.png"
+    assert _image_content_part("data:image/png;base64,AAA")["image_url"]["url"].startswith(
+        "data:"
+    )
+    p = tmp_path / "a.png"
+    p.write_bytes(b"hello")
+    assert _image_content_part(str(p))["image_url"]["url"].startswith(
+        "data:image/png;base64,"
+    )
+    with _pytest.raises(GPUBoxError):
+        _image_content_part("/no/file.png")
+
+    assert _is_vision_model("qwen2.5-vl-7b-instruct")
+    assert _is_vision_model("my-org/custom-vision-7b")
+    assert not _is_vision_model("qwen2.5-32b-instruct")

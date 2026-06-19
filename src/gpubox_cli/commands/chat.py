@@ -14,7 +14,9 @@ Round-table locks honoured here:
 
 from __future__ import annotations
 
+import base64
 import json
+import mimetypes
 import sys
 from pathlib import Path
 from typing import Any
@@ -32,6 +34,67 @@ from gpubox_cli.output import OutputCtx, emit_error, emit_json, emit_text
 #: (gateway lists qwen2.5-32b-instruct + llama-3.3-70b-instruct as live)
 #: so every CLI call without --model was hitting a 404.
 FALLBACK_MODEL = "qwen2.5-32b-instruct"
+
+#: Vision-language model on the gateway. When --image is passed and the
+#: caller hasn't pinned a (vision) --model, we auto-route here so users
+#: don't have to remember the slug. Same OpenAI-compatible
+#: /v1/chat/completions endpoint — the request just carries image_url
+#: content parts. Served on prod 2026-06-19.
+VISION_MODEL = "qwen2.5-vl-7b-instruct"
+
+#: CLI-side cap on a single local image before base64-inlining it. Guards
+#: against accidentally sending a huge file (memory spike + a multi-MB JSON
+#: body the gateway would reject anyway). URLs/data-URIs aren't read here so
+#: they aren't capped by this.
+MAX_IMAGE_BYTES = 20 * 1024 * 1024  # 20 MiB
+
+
+def _is_vision_model(model: str) -> bool:
+    """Heuristic: does this model id look like a vision/multimodal model?
+
+    Used to decide whether attaching --image should auto-switch the model.
+    If the caller already pointed at a VL model (e.g. their own fine-tune),
+    we leave it alone.
+    """
+    m = model.lower()
+    return "-vl" in m or "vl-" in m or "vision" in m
+
+
+def _image_content_part(ref: str) -> dict[str, Any]:
+    """Build an OpenAI-compatible ``image_url`` content part.
+
+    ``ref`` may be an http(s) URL, an existing ``data:`` URI, or a local
+    file path. Local files are read and base64-encoded into a data URI so
+    the image travels inline with the request (no separate upload, works
+    against any OpenAI-compatible endpoint). Raises GPUBoxError on a
+    missing/unreadable file so the @exit_on_error decorator renders a
+    clean non-zero exit.
+    """
+    if ref.startswith(("http://", "https://", "data:")):
+        return {"type": "image_url", "image_url": {"url": ref}}
+
+    path = Path(ref).expanduser()
+    if not path.is_file():
+        raise GPUBoxError(
+            f"image not found: {ref}",
+            hint="pass a readable file path, an https URL, or a data: URI",
+        )
+    size = path.stat().st_size
+    if size > MAX_IMAGE_BYTES:
+        raise GPUBoxError(
+            f"image too large: {ref} is {size // (1024 * 1024)} MiB "
+            f"(limit {MAX_IMAGE_BYTES // (1024 * 1024)} MiB)",
+            hint="resize/compress the image, or pass an https URL instead",
+        )
+    mime, _ = mimetypes.guess_type(str(path))
+    if not mime or not mime.startswith("image/"):
+        # Default to PNG; the gateway/model sniffs the actual bytes anyway.
+        mime = "image/png"
+    try:
+        encoded = base64.b64encode(path.read_bytes()).decode("ascii")
+    except OSError as exc:  # pragma: no cover - unreadable file race
+        raise GPUBoxError(f"could not read image {ref}: {exc}") from exc
+    return {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{encoded}"}}
 
 
 def _resolve_model(
@@ -57,7 +120,7 @@ def _build_client(ctx_obj: dict) -> GPUBoxClient:
 
 def _stream_chat(
     client: GPUBoxClient,
-    messages: list[dict[str, str]],
+    messages: list[dict[str, Any]],
     model: str,
     out: OutputCtx,
     extra: dict[str, Any] | None = None,
@@ -165,16 +228,34 @@ def run(
     interactive: bool = typer.Option(
         False, "--interactive", "-i", help="Open a REPL instead of one-shot."
     ),
+    image: list[str] | None = typer.Option(
+        None,
+        "--image",
+        "-I",
+        help=(
+            "Attach an image (file path, https URL, or data: URI). Repeatable. "
+            "Routes to the vision model unless --model is set."
+        ),
+    ),
     save_session: Path | None = typer.Option(
         None,
         "--save-session",
         help="Append the conversation transcript to a JSON-lines file (opt-in).",
     ),
 ) -> None:
-    """Send a chat completion. Streams to TTY, plain-prints when piped."""
+    """Send a chat completion. Streams to TTY, plain-prints when piped.
+
+    Pass --image one or more times to send images to the vision model
+    (qwen2.5-vl-7b-instruct), e.g. ``gpb chat "what's wrong here?" -I bug.png``.
+    """
     ctx_obj = ctx.obj or {}
     out: OutputCtx = ctx_obj.get("output", OutputCtx())
     chosen_model = _resolve_model(ctx_obj, model)
+
+    # Vision auto-route: if images are attached and the caller didn't pin a
+    # (vision) model, switch to the VL model so users don't need the slug.
+    if image and not model and not _is_vision_model(chosen_model):
+        chosen_model = VISION_MODEL
 
     extra: dict[str, Any] = {}
     if temperature is not None:
@@ -188,14 +269,24 @@ def run(
         )
         return
 
-    if not prompt:
+    if not prompt and not image:
         emit_error(out, "missing prompt. example: gpb chat \"hello world\"")
         raise typer.Exit(2)
 
-    messages: list[dict[str, str]] = []
+    messages: list[dict[str, Any]] = []
     if system:
         messages.append({"role": "system", "content": system})
-    messages.append({"role": "user", "content": prompt})
+    if image:
+        # OpenAI-compatible multimodal content: a text part + one image_url
+        # part per --image. Empty prompt with an image defaults to a sensible
+        # ask so the model has an instruction.
+        parts: list[dict[str, Any]] = [
+            {"type": "text", "text": prompt or "Describe this image."}
+        ]
+        parts.extend(_image_content_part(ref) for ref in image)
+        messages.append({"role": "user", "content": parts})
+    else:
+        messages.append({"role": "user", "content": prompt})
 
     try:
         with _build_client(ctx_obj) as client:
@@ -208,7 +299,7 @@ def run(
         _append_session(save_session, messages, assistant, chosen_model)
 
 
-def _append_session(path: Path, messages: list[dict[str, str]], assistant: str, model: str) -> None:
+def _append_session(path: Path, messages: list[dict[str, Any]], assistant: str, model: str) -> None:
     """JSONL append — one line per turn, append-only, plays nice with tail -f."""
     path.parent.mkdir(parents=True, exist_ok=True)
     record = {"model": model, "messages": messages + [{"role": "assistant", "content": assistant}]}
@@ -224,6 +315,7 @@ slash commands:
   /clear        forget conversation history
   /system <txt> set / replace system message
   /model <id>   switch to another model for the next turn
+  /image <ref>  attach an image (path/URL/data-URI) to your NEXT message
   /save <path>  append the current transcript to a JSONL file
   /exit         leave the REPL (Ctrl-D also works)
 """
@@ -255,9 +347,13 @@ def _run_repl(
     history_dir.mkdir(parents=True, exist_ok=True)
     session = PromptSession(history=FileHistory(str(history_dir / "chat.history")))
 
-    messages: list[dict[str, str]] = []
+    messages: list[dict[str, Any]] = []
     if system:
         messages.append({"role": "system", "content": system})
+
+    # Images queued by /image, flushed into the next user turn. Stays empty
+    # for text-only sessions so the common path is unchanged.
+    pending_images: list[str] = []
 
     if not out.quiet:
         emit_text(out, f"GPUBox REPL — model={model}. /help for commands, Ctrl-D to exit.")
@@ -275,6 +371,16 @@ def _run_repl(
                 continue
 
             if user_input.startswith("/"):
+                # /image is handled here (not in _handle_slash) because it
+                # mutates the loop-local pending_images / model.
+                low = user_input.split(maxsplit=1)
+                if low[0].lower() == "/image":
+                    if len(low) < 2 or not low[1].strip():
+                        emit_text(out, "usage: /image <path-or-url-or-data-uri>")
+                    else:
+                        pending_images.append(low[1].strip())
+                        emit_text(out, f"attached image (sends with next message): {low[1].strip()}")
+                    continue
                 done = _handle_slash(user_input, messages, out, save_session)
                 if done == "model":
                     # /model toggles the local var
@@ -283,18 +389,38 @@ def _run_repl(
                     break
                 continue
 
-            messages.append({"role": "user", "content": user_input})
+            # Build this turn. With pending images, send OpenAI-compatible
+            # multimodal content and route to the vision model for this turn.
+            turn_model = model
+            turn_had_images = bool(pending_images)
+            if pending_images:
+                try:
+                    parts: list[dict[str, Any]] = [{"type": "text", "text": user_input}]
+                    parts.extend(_image_content_part(ref) for ref in pending_images)
+                except GPUBoxError as exc:
+                    emit_error(out, str(exc))
+                    continue  # keep pending_images so the user can fix the path
+                messages.append({"role": "user", "content": parts})
+                if not _is_vision_model(turn_model):
+                    turn_model = VISION_MODEL
+            else:
+                messages.append({"role": "user", "content": user_input})
+
             try:
-                assistant = _stream_chat(client, messages, model, out, extra)
+                assistant = _stream_chat(client, messages, turn_model, out, extra)
             except GPUBoxError as exc:
                 emit_error(out, str(exc))
                 # Roll back the unanswered user turn so the next try is clean.
+                # pending_images is left intact so a retry re-sends the images.
                 messages.pop()
                 continue
             messages.append({"role": "assistant", "content": assistant})
+            # Images are consumed only after the turn actually succeeds.
+            if turn_had_images:
+                pending_images = []
 
             if save_session:
-                _append_session(save_session, messages[:-1], assistant, model)
+                _append_session(save_session, messages[:-1], assistant, turn_model)
 
 
 # Tiny shared cell so /model can mutate the outer scope's `model` variable.
@@ -303,7 +429,7 @@ _last_model_change: list[str | None] = [None]
 
 def _handle_slash(
     line: str,
-    messages: list[dict[str, str]],
+    messages: list[dict[str, Any]],
     out: OutputCtx,
     save_session: Path | None,
 ) -> str | None:
