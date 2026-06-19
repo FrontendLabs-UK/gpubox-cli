@@ -37,9 +37,34 @@ gpb signup --email you@example.com    # opens https://gpubox.ai/signup
 gpb auth login                         # paste your gpb_live_… key (input hidden)
 gpb auth status                        # confirm identity
 gpb chat "what's the capital of Nigeria?"
+gpb chat "what's wrong in this screenshot?" --image bug.png   # vision, auto-routed
 gpb embed "RAG retrieval target" --json | jq '.data[0].embedding | length'
 gpb transcribe ./meeting.mp3
 ```
+
+## Vision (image input)
+
+Attach images with `--image` (alias `-I`, repeatable). The CLI builds
+OpenAI-compatible multimodal content and, unless you pin `--model`, routes
+the turn to the vision model `qwen2.5-vl-7b-instruct`:
+
+```bash
+# Local file (read + sent inline as a base64 data-URI)
+gpb chat "describe this UI and any errors you see" -I screenshot.png
+
+# Multiple images in one prompt
+gpb chat "what changed between these?" -I before.png -I after.png
+
+# An https URL or a data: URI also works
+gpb chat "read the chart" -I https://example.com/chart.png
+
+# Image-only — defaults the text to "Describe this image."
+gpb chat -I receipt.jpg
+```
+
+In the REPL, `/image <path-or-url>` attaches an image to your next message
+(that turn auto-routes to the vision model). Good for screenshot/UI
+analysis, OCR, chart and document-image reading, and visual Q&A.
 
 For scripts and CI, prefer environment variables:
 
@@ -96,7 +121,7 @@ Streaming chat tokens render live in a TTY. When stdout is piped or
 ## Commands
 
 ```
-gpb chat            one-shot or interactive REPL (--interactive)
+gpb chat            one-shot or interactive REPL (--interactive); --image for vision
 gpb embed           one-shot embedding
 gpb transcribe      Whisper transcription of an audio file
 
@@ -143,7 +168,7 @@ lives at `https://api.gpubox.ai/docs`.
 
 | CLI command                          | HTTP                          | Notes                                                |
 | ------------------------------------ | ----------------------------- | ---------------------------------------------------- |
-| `gpb chat`                           | POST `/v1/chat/completions`   | SSE stream in a TTY, buffered otherwise              |
+| `gpb chat`                           | POST `/v1/chat/completions`   | SSE stream in a TTY, buffered otherwise; `--image` sends multimodal content to the vision model (`qwen2.5-vl-7b-instruct`) |
 | `gpb embed`                          | POST `/v1/embeddings`         | default model `BAAI/bge-m3`                          |
 | `gpb transcribe`                     | POST `/v1/audio/transcriptions` | multipart upload; Whisper-compatible                 |
 | `gpb signup`                         | (browser)                     | opens `https://gpubox.ai/signup` (no API call)       |
