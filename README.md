@@ -109,6 +109,7 @@ gpb billing balance|topup|history
 gpb training submit|list|status|watch|download|cancel
 gpb hosting list|promote|tier|delete
 gpb vault enable|disable|search          # enable/disable are operator-only (no public route)
+gpb vault enrich <url> --capture "…"     # web enrichment: preview (default) or --save (gated)
 gpb vault conversations list|get|delete
 gpb vault corpora list|get|create|delete
 gpb assistants list|create|update|run|delete
@@ -169,6 +170,8 @@ lives at `https://api.gpubox.ai/docs`.
 | `gpb vault enable`                   | (none — operator-only)        | no public route; prints "email support@gpubox.ai"    |
 | `gpb vault disable`                  | (none — operator-only)        | no public route; prints "email support@gpubox.ai"    |
 | `gpb vault search`                   | POST `/v1/conversations/search` | keyword FTS (`--mode fts`/`substring`), not semantic |
+| `gpb vault enrich <url>`             | POST `/v1/vault/enrich`       | preview only (writes nothing); `--batch <file>` for 1..5 URLs; pipe to `jq` |
+| `gpb vault enrich <url> --save`      | POST `/v1/vault/enrich` then POST `/v1/vault/enrich/save` | preview, then persist `ok` records; GATED on the DB cutover (404 `save_not_enabled` until the flag flips) |
 | `gpb vault conversations list`       | GET `/v1/conversations`       |                                                      |
 | `gpb vault conversations get <id>`   | GET `/v1/conversations/{id}` (+ `/messages`) | metadata + message history             |
 | `gpb vault conversations delete <id>`| DELETE `/v1/conversations/{id}` | soft-delete                                        |

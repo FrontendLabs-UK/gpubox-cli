@@ -18,13 +18,14 @@ to enable" when off). So `gpb vault enable/disable` cannot POST anywhere without
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import httpx
 import typer
 
 from gpubox_cli import config as cfg
-from gpubox_cli.client import ClientConfig, GPUBoxClient, exit_on_error
+from gpubox_cli.client import ClientConfig, GPUBoxClient, GPUBoxError, exit_on_error
 from gpubox_cli.output import OutputCtx, emit_json, emit_text
 from gpubox_cli.version import USER_AGENT
 
@@ -34,6 +35,18 @@ corpora = typer.Typer(no_args_is_help=True, help="RAG corpora.")
 
 app.add_typer(conversations, name="conversations")
 app.add_typer(corpora, name="corpora")
+
+# The record fields the save endpoint (POST /vault/enrich/save -> EnrichRecordIn)
+# accepts. We project preview records down to exactly these so a forward-compatible
+# annotation field on the preview response never breaks the save POST.
+_SAVE_RECORD_FIELDS = (
+    "url",
+    "extracted",
+    "fetched_at",
+    "status",
+    "source_host",
+    "truncated",
+)
 
 
 def _output(ctx: typer.Context) -> OutputCtx:
@@ -152,6 +165,242 @@ def search(
             f"{hit.get('conversation_id','?'):<38} "
             f"rank={hit.get('rank','?'):<6} {snippet}",
         )
+
+
+# ---- web enrichment --------------------------------------------------------
+
+
+def _load_capture_schema(schema_path: Path | None) -> dict | None:
+    """Read + parse an optional JSON-schema file for `--schema`.
+
+    A clean GPUBoxError (not a traceback) on a missing/garbage file so the
+    CLI exits with a useful message and the documented exit code.
+    """
+    if schema_path is None:
+        return None
+    try:
+        raw = schema_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise GPUBoxError(f"could not read schema file {schema_path}: {exc}") from exc
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise GPUBoxError(f"schema file {schema_path} is not valid JSON: {exc}") from exc
+    if not isinstance(parsed, dict):
+        raise GPUBoxError(f"schema file {schema_path} must contain a JSON object")
+    return parsed
+
+
+def _read_batch_urls(batch_path: Path) -> list[str]:
+    """Read URLs from a --batch file: one per line, blank lines + #comments
+    skipped. The gateway caps a single enrich call at 5 URLs, so we surface a
+    clean error rather than letting the gateway 422 a too-long list."""
+    try:
+        lines = batch_path.read_text(encoding="utf-8").splitlines()
+    except OSError as exc:
+        raise GPUBoxError(f"could not read batch file {batch_path}: {exc}") from exc
+    urls = [ln.strip() for ln in lines if ln.strip() and not ln.strip().startswith("#")]
+    if not urls:
+        raise GPUBoxError(f"batch file {batch_path} contained no URLs")
+    if len(urls) > 5:
+        raise GPUBoxError(
+            f"batch file has {len(urls)} URLs; the gateway accepts at most 5 "
+            "per enrich call — split the file."
+        )
+    return urls
+
+
+@app.command("enrich")
+@exit_on_error
+def enrich(
+    ctx: typer.Context,
+    url: str | None = typer.Argument(
+        None, help="A single public http(s) URL to enrich. Omit when using --batch."
+    ),
+    capture: str = typer.Option(
+        ...,
+        "--capture",
+        "-c",
+        help="Plain-language description of the data to extract (e.g. 'pricing, contact email').",
+    ),
+    schema: Path | None = typer.Option(
+        None,
+        "--schema",
+        exists=True,
+        readable=True,
+        help="Optional JSON-schema file forcing the shape of the extracted output.",
+    ),
+    batch: Path | None = typer.Option(
+        None,
+        "--batch",
+        exists=True,
+        readable=True,
+        help="A file of URLs (one per line, 1..5) to enrich in one call instead of a single URL.",
+    ),
+    collection: str | None = typer.Option(
+        None,
+        "--collection",
+        help="Target vault collection id (used only with --save).",
+    ),
+    save: bool = typer.Option(
+        False,
+        "--save/--preview",
+        help="Persist accepted records into the Vault. GATED on the DB cutover (returns 404/400 until the flag flips); default is preview-only.",
+    ),
+    respect_robots: bool = typer.Option(
+        True,
+        "--respect-robots/--no-respect-robots",
+        help="Honour robots.txt (default). Disable only on pages you own.",
+    ),
+) -> None:
+    """Fetch public web page(s) and extract structured data.
+
+    Preview (default) returns the extracted records and writes NOTHING —
+    pipe it straight into `jq`. `--save` persists the `ok` records into the
+    Vault, but that path is GATED on the DB cutover: until the flag flips the
+    gateway returns a typed 404 `save_not_enabled` (or 400 `save_gated` on the
+    preview route), which the CLI surfaces cleanly rather than crashing.
+
+    Maps to:
+      * preview -> POST /v1/vault/enrich
+      * --save  -> POST /v1/vault/enrich (preview) then POST /v1/vault/enrich/save
+    """
+    out = _output(ctx)
+
+    # --collection only means anything on the save path; silently ignoring it on
+    # a preview would discard the user's choice without telling them.
+    if collection is not None and not save:
+        raise GPUBoxError("--collection only applies with --save (preview writes nothing)")
+
+    # Resolve the URL set: a single positional URL XOR a --batch file.
+    if batch is not None and url is not None:
+        raise GPUBoxError("pass a single URL or --batch, not both")
+    if batch is not None:
+        urls = _read_batch_urls(batch)
+    elif url is not None:
+        urls = [url]
+    else:
+        raise GPUBoxError("provide a URL argument or --batch <file>")
+
+    schema_obj = _load_capture_schema(schema)
+
+    body: dict = {"urls": urls, "capture": capture, "respect_robots": respect_robots}
+    if schema_obj is not None:
+        body["schema"] = schema_obj
+
+    with _client(ctx) as client:
+        # Always run the preview first. On a 1..5-URL preview the gateway
+        # returns one record per URL (partial-success tolerant).
+        preview = client.request("POST", "/vault/enrich", json_body=body)
+
+        if not save:
+            if out.json_mode:
+                emit_json(out, preview)
+                return
+            _emit_enrich_records(out, preview)
+            return
+
+        # --save: project the OK preview records to the save shape and POST
+        # them. The save endpoint takes records (not URLs) + an optional
+        # collection. A record that did not extract cleanly is NOT saved — but
+        # we must NOT swallow it: a non-ok URL never reaches the save response's
+        # `skipped` list (it never got POSTed), so we track those preview
+        # failures separately and surface them in the output.
+        records = preview.get("records", []) if isinstance(preview, dict) else []
+        ok_records = [
+            {k: r.get(k) for k in _SAVE_RECORD_FIELDS}
+            for r in records
+            if isinstance(r, dict) and r.get("status") == "ok"
+        ]
+        preview_skipped = [
+            {"url": r.get("url"), "status": r.get("status"), "reason": r.get("reason")}
+            for r in records
+            if isinstance(r, dict) and r.get("status") != "ok"
+        ]
+        if not ok_records:
+            # Nothing extracted cleanly — emit the preview so the user sees
+            # the per-record reasons rather than POSTing an empty save.
+            if out.json_mode:
+                emit_json(
+                    out,
+                    {
+                        "saved": False,
+                        "preview": preview,
+                        "preview_skipped": preview_skipped,
+                        "skipped_save": "no ok records",
+                    },
+                )
+                return
+            emit_text(out, "no records extracted cleanly; nothing to save")
+            _emit_enrich_records(out, preview)
+            return
+
+        save_body: dict = {"records": ok_records}
+        if collection is not None:
+            save_body["collection"] = collection
+        saved = client.request(
+            "POST", "/vault/enrich/save", json_body=save_body, idempotent=True
+        )
+
+    if out.json_mode:
+        # Merge the preview-stage failures into the save document so a `--json`
+        # consumer sees BOTH the saved docs and the URLs that never made it to
+        # the save call (otherwise `skipped` undercounts).
+        doc = dict(saved) if isinstance(saved, dict) else {"saved": saved}
+        if preview_skipped:
+            doc["preview_skipped"] = preview_skipped
+        emit_json(out, doc)
+        return
+    if isinstance(saved, dict):
+        doc_ids = saved.get("document_ids", []) or []
+        save_skipped = saved.get("skipped", []) or []
+        emit_text(
+            out,
+            f"saved={saved.get('saved')} documents={len(doc_ids)} "
+            f"save_skipped={len(save_skipped)} preview_skipped={len(preview_skipped)}",
+        )
+        for did in doc_ids:
+            emit_text(out, f"  document {did}")
+        for sk in save_skipped:
+            if isinstance(sk, dict):
+                emit_text(out, f"  save-skipped {sk.get('url','?')}: {sk.get('reason','?')}")
+        for sk in preview_skipped:
+            emit_text(
+                out,
+                f"  preview-skipped {sk.get('url','?')}: "
+                f"{sk.get('status','?')} {sk.get('reason') or ''}",
+            )
+
+
+def _emit_enrich_records(out: OutputCtx, preview: dict) -> None:
+    """Human-readable rendering of a preview response (non --json mode)."""
+    records = preview.get("records", []) if isinstance(preview, dict) else []
+    if not records:
+        emit_text(out, "(no records)")
+        return
+    for rec in records:
+        if not isinstance(rec, dict):
+            continue
+        host = rec.get("source_host", "?")
+        status = rec.get("status", "?")
+        flags = []
+        if rec.get("pii_detected"):
+            flags.append("pii")
+        if rec.get("injection_suspected"):
+            flags.append("injection?")
+        if rec.get("needs_disambiguation"):
+            flags.append("ambiguous")
+        if rec.get("truncated"):
+            flags.append("truncated")
+        flag_str = f" [{','.join(flags)}]" if flags else ""
+        emit_text(out, f"{host:<28} status={status}{flag_str}")
+        reason = rec.get("reason")
+        if reason and status != "ok":
+            emit_text(out, f"  reason: {reason}")
+        extracted = rec.get("extracted") or {}
+        if isinstance(extracted, dict):
+            for k, v in extracted.items():
+                emit_text(out, f"  {k}: {v}")
 
 
 # ---- conversations ---------------------------------------------------------
