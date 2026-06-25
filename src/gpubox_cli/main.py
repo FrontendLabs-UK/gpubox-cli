@@ -31,6 +31,7 @@ from gpubox_cli.commands import (
     chat,
     config_cmd,
     embed,
+    finetune,
     hosting,
     profile_cmd,
     training,
@@ -119,6 +120,7 @@ app.add_typer(profile_cmd.app, name="profile", help="Manage credential profiles.
 app.add_typer(config_cmd.app, name="config", help="Read/write CLI config.")
 app.add_typer(billing.app, name="billing", help="Wallet, top-ups, usage.")
 app.add_typer(training.app, name="training", help="Submit + watch fine-tuning runs.")
+app.add_typer(finetune.app, name="finetune", help="Workspace-scoped user fine-tunes (V1.5 W3).")
 app.add_typer(hosting.app, name="hosting", help="Hosting tier promotion + management.")
 app.add_typer(vault.app, name="vault", help="Conversation Vault + RAG corpora.")
 app.add_typer(workspace.app, name="workspace", help="Workspaces — per-tenant isolation containers.")
