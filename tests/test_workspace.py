@@ -6,7 +6,6 @@ it), the request verbs, and the `use`/`delete` config-pin side effects.
 """
 from __future__ import annotations
 
-import json
 from contextlib import contextmanager
 from typing import Any
 
@@ -15,7 +14,6 @@ from typer.testing import CliRunner
 
 from gpubox_cli import config as cfg
 from gpubox_cli.commands import workspace as ws_cmd
-
 
 runner = CliRunner()
 

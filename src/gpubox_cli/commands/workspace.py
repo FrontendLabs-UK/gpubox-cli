@@ -16,7 +16,7 @@ import typer
 
 from gpubox_cli import config as cfg
 from gpubox_cli.client import ClientConfig, GPUBoxClient, exit_on_error
-from gpubox_cli.output import OutputCtx, emit_error, emit_json, emit_text
+from gpubox_cli.output import OutputCtx, emit_json, emit_text
 
 app = typer.Typer(no_args_is_help=True, help="Workspaces — per-tenant isolation containers.")
 
