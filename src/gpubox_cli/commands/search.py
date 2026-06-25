@@ -20,8 +20,6 @@ WITHOUT the /v1 prefix ("/search").
 """
 from __future__ import annotations
 
-from typing import Optional
-
 import typer
 
 from gpubox_cli import config as cfg
@@ -42,13 +40,13 @@ def _build_client(ctx_obj: dict) -> GPUBoxClient:
     return GPUBoxClient(ClientConfig(api_key=resolved.api_key, base_url=resolved.base_url))
 
 
-def _active_workspace() -> Optional[str]:
+def _active_workspace() -> str | None:
     settings = cfg.load_settings()
     val = settings.extra.get(_ACTIVE_WORKSPACE_KEY)
     return str(val) if val else None
 
 
-def _workspace_headers(override: Optional[str]) -> Optional[dict]:
+def _workspace_headers(override: str | None) -> dict | None:
     ws = override or _active_workspace()
     return {WORKSPACE_HEADER: ws} if ws else None
 
@@ -63,13 +61,13 @@ def run(
              "(fails closed: refuses if there is nothing to ground on).",
     ),
     k: int = typer.Option(10, "--k", "-n", help="Hits / evidence cards (default 10)."),
-    sources: Optional[str] = typer.Option(
+    sources: str | None = typer.Option(
         None, "--sources",
         help="Comma-separated source restriction: docs,chat (default both).",
     ),
     rerank: bool = typer.Option(False, "--rerank", help="Cross-encoder rerank (slower)."),
     min_similarity: float = typer.Option(0.0, "--min-similarity"),
-    workspace: Optional[str] = typer.Option(
+    workspace: str | None = typer.Option(
         None, "--workspace",
         help="Scope to a workspace id (default: the pinned active workspace).",
     ),
