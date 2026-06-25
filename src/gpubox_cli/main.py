@@ -37,6 +37,7 @@ from gpubox_cli.commands import (
     transcribe,
     users,
     vault,
+    workspace,
 )
 from gpubox_cli.commands import auth as auth_cmd
 from gpubox_cli.output import OutputCtx
@@ -120,6 +121,7 @@ app.add_typer(billing.app, name="billing", help="Wallet, top-ups, usage.")
 app.add_typer(training.app, name="training", help="Submit + watch fine-tuning runs.")
 app.add_typer(hosting.app, name="hosting", help="Hosting tier promotion + management.")
 app.add_typer(vault.app, name="vault", help="Conversation Vault + RAG corpora.")
+app.add_typer(workspace.app, name="workspace", help="Workspaces — per-tenant isolation containers.")
 app.add_typer(assistants.app, name="assistants", help="Custom assistants.")
 app.add_typer(users.app, name="users", help="Users, invites, OIDC clients.")
 
