@@ -116,6 +116,30 @@ def get_agent(ctx: typer.Context, agent_id: str = typer.Argument(...)) -> None:
     emit_text(out, f"  scope docs: {resp.get('doc_scope_ids')}")
 
 
+@app.command("run", help="Run a check now (on-demand) for a standing agent.")
+@exit_on_error
+def run_agent(ctx: typer.Context, agent_id: str = typer.Argument(...)) -> None:
+    """Trigger an on-demand check ("Run a check") for a standing agent.
+
+    Queues a run that Argus's scheduler/worker picks up and executes through the
+    same bounded, read-only loop the scheduled cadence uses — the inform lands in
+    the inbox (`gpb argus inbox`). At most ONE check runs per agent at a time: if
+    one is already queued or running, the gateway returns a conflict (run already
+    in flight) rather than starting a second.
+    """
+    out = _output(ctx)
+    with _client(ctx) as client:
+        resp = client.request(
+            "POST", f"/argus/agents/{agent_id}/run", idempotent=True,
+            extra_headers=_active_workspace_headers())
+    if out.json_mode:
+        emit_json(out, resp)
+        return
+    rid = (resp.get("run_id") or resp.get("id", "?")) if isinstance(resp, dict) else "?"
+    status = resp.get("status", "pending") if isinstance(resp, dict) else "pending"
+    emit_text(out, f"queued: run {rid} [{status}] — check `gpb argus inbox` shortly.")
+
+
 @app.command("delete", help="Retire a standing research question.")
 @exit_on_error
 def delete_agent(ctx: typer.Context, agent_id: str = typer.Argument(...)) -> None:
