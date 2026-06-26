@@ -26,6 +26,7 @@ import typer
 
 from gpubox_cli.client import GPUBoxError, render_error
 from gpubox_cli.commands import (
+    argus,
     assistants,
     billing,
     chat,
@@ -126,6 +127,7 @@ app.add_typer(hosting.app, name="hosting", help="Hosting tier promotion + manage
 app.add_typer(vault.app, name="vault", help="Conversation Vault + RAG corpora.")
 app.command("search", help="Unified search + grounded synthesis (docs + chat).")(search.run)
 app.add_typer(workspace.app, name="workspace", help="Workspaces — per-tenant isolation containers.")
+app.add_typer(argus.app, name="argus", help="Argus — your Standing Research Agent (V1.5 W4).")
 app.add_typer(assistants.app, name="assistants", help="Custom assistants.")
 app.add_typer(users.app, name="users", help="Users, invites, OIDC clients.")
 
