@@ -33,11 +33,18 @@ def _output(ctx: typer.Context) -> OutputCtx:
 
 @app.command("list")
 @exit_on_error
-def list_models(ctx: typer.Context) -> None:
+def list_models(
+    ctx: typer.Context,
+    workspace: str | None = typer.Option(
+        None, "--workspace", help="Override the active workspace for this command."
+    ),
+) -> None:
     """List currently hosted models + their tiers."""
     out = _output(ctx)
     with _client(ctx) as client:
-        resp = client.request("GET", "/hosting/models")
+        resp = client.request(
+            "GET", "/hosting/models", extra_headers=cfg.workspace_headers(workspace)
+        )
     if out.json_mode:
         emit_json(out, resp)
         return
@@ -56,17 +63,34 @@ def list_models(ctx: typer.Context) -> None:
 def promote(
     ctx: typer.Context,
     run_id: str = typer.Argument(..., help="Successful training run id."),
+    name: str = typer.Option(
+        ...,
+        "--name",
+        help="Hosted model name (2-63 chars, [a-z0-9][a-z0-9_-]). Required.",
+    ),
     tier: str = typer.Option("cold", "--tier", help="cold|warm|always_hot."),
-    name: str | None = typer.Option(None, "--name", help="Override hosted model id."),
+    workspace: str | None = typer.Option(
+        None, "--workspace", help="Override the active workspace for this command."
+    ),
 ) -> None:
     """Promote a finished run into a hosted endpoint at the given tier."""
     out = _output(ctx)
     _ensure_tier(tier)
-    body: dict = {"run_id": run_id, "tier": tier}
-    if name:
-        body["name"] = name
+    # HostedModelCreate is extra='forbid' and requires training_run_id,
+    # hosted_model_name, hosting_tier — send exactly those keys.
+    body: dict = {
+        "training_run_id": run_id,
+        "hosted_model_name": name,
+        "hosting_tier": tier,
+    }
     with _client(ctx) as client:
-        resp = client.request("POST", "/hosting/models", json_body=body, idempotent=True)
+        # The training run is looked up under workspace RLS — a run created in
+        # workspace A (gpb finetune create sends the header) 404s here without
+        # the same workspace header.
+        resp = client.request(
+            "POST", "/hosting/models", json_body=body, idempotent=True,
+            extra_headers=cfg.workspace_headers(workspace),
+        )
     if out.json_mode:
         emit_json(out, resp)
         return
@@ -80,13 +104,22 @@ def set_tier(
     ctx: typer.Context,
     model_id: str = typer.Argument(...),
     tier: str = typer.Option(..., "--tier", help="cold|warm|always_hot."),
+    workspace: str | None = typer.Option(
+        None, "--workspace", help="Override the active workspace for this command."
+    ),
 ) -> None:
     """Change the tier of a hosted model."""
     out = _output(ctx)
     _ensure_tier(tier)
     with _client(ctx) as client:
+        # Tier changes go through POST /hosting/models/{id}/transition; there is
+        # no PATCH handler. HostedModelTransition is extra='forbid' with a single
+        # required field `hosting_tier`.
         resp = client.request(
-            "PATCH", f"/hosting/models/{model_id}", json_body={"tier": tier}
+            "POST",
+            f"/hosting/models/{model_id}/transition",
+            json_body={"hosting_tier": tier},
+            extra_headers=cfg.workspace_headers(workspace),
         )
     if out.json_mode:
         emit_json(out, resp)
@@ -96,11 +129,20 @@ def set_tier(
 
 @app.command("delete")
 @exit_on_error
-def delete_model(ctx: typer.Context, model_id: str = typer.Argument(...)) -> None:
+def delete_model(
+    ctx: typer.Context,
+    model_id: str = typer.Argument(...),
+    workspace: str | None = typer.Option(
+        None, "--workspace", help="Override the active workspace for this command."
+    ),
+) -> None:
     """Delete a hosted model."""
     out = _output(ctx)
     with _client(ctx) as client:
-        client.request("DELETE", f"/hosting/models/{model_id}")
+        client.request(
+            "DELETE", f"/hosting/models/{model_id}",
+            extra_headers=cfg.workspace_headers(workspace),
+        )
     if out.json_mode:
         emit_json(out, {"ok": True, "id": model_id})
         return

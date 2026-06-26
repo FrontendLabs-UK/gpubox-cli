@@ -70,13 +70,72 @@ def test_create_posts_training_run_without_v1_prefix(monkeypatch):
     with _patch_client(monkeypatch, [{"id": "run-1"}]) as stub:
         res = runner.invoke(
             ft_cmd.app,
-            ["create", "--preset", "qwen32b-lora-r16", "--dataset", "gpubox://ds"],
+            ["create", "--preset", "qwen32b-lora-r16"],
         )
     assert res.exit_code == 0, res.output
     call = stub.calls[0]
     assert call["method"] == "POST"
     assert call["path"] == "/training/runs"  # NO /v1 prefix
-    assert call["json_body"] == {"preset": "qwen32b-lora-r16", "dataset": "gpubox://ds"}
+    # GPUB-458: only `preset`; the gateway builds the vault corpus + defaults
+    # source='vault'. No dataset URL, no top-level tunables.
+    assert call["json_body"] == {"preset": "qwen32b-lora-r16"}
+
+
+def test_create_nests_overrides_under_hyperparams(monkeypatch):
+    """epochs/batch_size/learning_rate must be nested under `hyperparams` using
+    the preset key names — never sent as top-level keys (extra='forbid')."""
+    with _patch_client(monkeypatch, [{"id": "run-1"}]) as stub:
+        res = runner.invoke(
+            ft_cmd.app,
+            [
+                "create", "--preset", "qwen32b-lora-r16",
+                "--since", "2026-01-01T00:00:00Z", "--until", "2026-02-01T00:00:00Z",
+                "--epochs", "2", "--batch-size", "4", "--learning-rate", "0.0001",
+            ],
+        )
+    assert res.exit_code == 0, res.output
+    assert stub.calls[0]["json_body"] == {
+        "preset": "qwen32b-lora-r16",
+        "since": "2026-01-01T00:00:00Z",
+        "until": "2026-02-01T00:00:00Z",
+        "hyperparams": {"epochs": 2, "batch_size": 4, "learning_rate": 0.0001},
+    }
+
+
+def test_create_omits_hyperparams_when_no_overrides(monkeypatch):
+    """No tunables → no `hyperparams` key at all (inherit preset defaults)."""
+    with _patch_client(monkeypatch, [{"id": "run-1"}]) as stub:
+        res = runner.invoke(ft_cmd.app, ["create", "--preset", "p"])
+    assert res.exit_code == 0, res.output
+    assert "hyperparams" not in stub.calls[0]["json_body"]
+
+
+def test_create_never_sends_forbidden_keys(monkeypatch):
+    """Regression: the gateway's TrainingRunCreate is extra='forbid'. The body
+    must NOT carry the legacy/flat keys dataset/name/epochs/batch_size/
+    learning_rate at the top level under any combination of flags."""
+    with _patch_client(monkeypatch, [{"id": "run-1"}]) as stub:
+        res = runner.invoke(
+            ft_cmd.app,
+            [
+                "create", "--preset", "p",
+                "--epochs", "3", "--batch-size", "8", "--learning-rate", "0.001",
+            ],
+        )
+    assert res.exit_code == 0, res.output
+    body = stub.calls[0]["json_body"]
+    for forbidden in ("dataset", "dataset_url", "name", "epochs", "batch_size", "learning_rate"):
+        assert forbidden not in body, f"top-level {forbidden!r} leaked into body"
+
+
+def test_create_rejects_dataset_flag(monkeypatch):
+    """--dataset was removed (GPUB-458); passing it is a usage error, not a
+    silent 422 from the gateway."""
+    with _patch_client(monkeypatch, [{"id": "run-1"}]):
+        res = runner.invoke(
+            ft_cmd.app, ["create", "--preset", "p", "--dataset", "gpubox://ds"]
+        )
+    assert res.exit_code != 0
 
 
 def test_create_sends_active_workspace_header(monkeypatch):
@@ -84,7 +143,7 @@ def test_create_sends_active_workspace_header(monkeypatch):
     with _patch_client(monkeypatch, [{"id": "run-1"}]) as stub:
         res = runner.invoke(
             ft_cmd.app,
-            ["create", "--preset", "p", "--dataset", "d"],
+            ["create", "--preset", "p"],
         )
     assert res.exit_code == 0, res.output
     assert stub.calls[0]["extra_headers"] == {"X-GPUBox-Workspace": "ws-A"}
@@ -95,7 +154,7 @@ def test_create_workspace_override_wins_over_pin(monkeypatch):
     with _patch_client(monkeypatch, [{"id": "run-1"}]) as stub:
         res = runner.invoke(
             ft_cmd.app,
-            ["create", "--preset", "p", "--dataset", "d", "--workspace", "ws-B"],
+            ["create", "--preset", "p", "--workspace", "ws-B"],
         )
     assert res.exit_code == 0, res.output
     assert stub.calls[0]["extra_headers"] == {"X-GPUBox-Workspace": "ws-B"}

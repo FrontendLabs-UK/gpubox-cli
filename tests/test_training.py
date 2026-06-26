@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import time
+from pathlib import Path
 
 import httpx
 import pytest
@@ -28,13 +30,52 @@ def test_submit_returns_run_id(runner: CliRunner) -> None:
     )
     result = runner.invoke(
         app,
-        ["training", "submit", "--preset", "deberta-base", "--dataset", "s3://bucket/x.jsonl"],
+        ["training", "submit", "--preset", "deberta-base"],
     )
     assert result.exit_code == 0
     assert "run_abc" in result.stdout
-    body = route.calls.last.request.read()
-    assert b"deberta-base" in body
+    sent = json.loads(route.calls.last.request.read())
+    # GPUB-458: only `preset` for a plain submit; vault corpus + source='vault'
+    # are server-side.
+    assert sent == {"preset": "deberta-base"}
     assert "Idempotency-Key" in route.calls.last.request.headers
+
+
+@respx.mock
+def test_submit_nests_overrides_under_hyperparams(runner: CliRunner) -> None:
+    """epochs/batch_size/learning_rate go under `hyperparams`; --since/--until
+    are top-level vault-window bounds. No legacy flat or dataset keys leak in."""
+    route = respx.post(f"{BASE}/training/runs").mock(
+        return_value=httpx.Response(200, json={"id": "run_h"})
+    )
+    result = runner.invoke(
+        app,
+        [
+            "training", "submit", "--preset", "deberta-base",
+            "--since", "2026-01-01T00:00:00Z", "--until", "2026-02-01T00:00:00Z",
+            "--epochs", "3", "--batch-size", "16", "--learning-rate", "0.00002",
+        ],
+    )
+    assert result.exit_code == 0, result.stderr
+    sent = json.loads(route.calls.last.request.read())
+    assert sent == {
+        "preset": "deberta-base",
+        "since": "2026-01-01T00:00:00Z",
+        "until": "2026-02-01T00:00:00Z",
+        "hyperparams": {"epochs": 3, "batch_size": 16, "learning_rate": 0.00002},
+    }
+    # Regression: TrainingRunCreate is extra='forbid'.
+    for forbidden in ("dataset", "dataset_url", "name", "epochs", "batch_size", "learning_rate"):
+        assert forbidden not in sent
+
+
+def test_submit_rejects_dataset_flag(runner: CliRunner) -> None:
+    """--dataset was removed (GPUB-458) — usage error, not a gateway 422."""
+    result = runner.invoke(
+        app,
+        ["training", "submit", "--preset", "p", "--dataset", "s3://bucket/x.jsonl"],
+    )
+    assert result.exit_code != 0
 
 
 @respx.mock
@@ -123,3 +164,68 @@ def test_watch_json_failed_run_exits_nonzero_with_clean_stdout(
     assert result.exit_code == 1
     doc = json.loads(result.stdout)
     assert doc["status"] == "failed"
+
+
+# ---------------------------------------------------------------------------
+# download — JSON signed-URL envelope (GPUB drift fix), not /artifact stream
+# ---------------------------------------------------------------------------
+
+
+@respx.mock
+def test_download_uses_signed_url_envelope(
+    runner: CliRunner, tmp_path: Path
+) -> None:
+    """The gateway exposes GET /training/runs/{id}/download returning
+    {url, sha256, ...}; the CLI must call THAT (not the dead /artifact route),
+    then fetch the signed URL and write the bytes to disk."""
+    payload = b"fake-adapter-bytes"
+    sha = hashlib.sha256(payload).hexdigest()
+    env_route = respx.get(f"{BASE}/training/runs/run_d/download").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "url": "https://r2.example/signed/run_d.bin?sig=abc",
+                "expires_in": 3600,
+                "sha256": sha,
+                "size_bytes": len(payload),
+            },
+        )
+    )
+    blob_route = respx.get("https://r2.example/signed/run_d.bin").mock(
+        return_value=httpx.Response(200, content=payload)
+    )
+    dest = tmp_path / "adapter.bin"
+    result = runner.invoke(app, ["training", "download", "run_d", str(dest)])
+    assert result.exit_code == 0, result.stderr
+    assert env_route.called
+    assert blob_route.called
+    assert dest.read_bytes() == payload
+    # Regression: the dead /artifact route is never registered, so a request to
+    # it would raise an unmocked-route error — the asserts above prove the CLI
+    # only ever touched /download + the signed URL.
+
+
+@respx.mock
+def test_download_rejects_sha256_mismatch(
+    runner: CliRunner, tmp_path: Path
+) -> None:
+    """A corrupted transfer (sha mismatch vs the gateway-pinned digest) must
+    fail and not leave a half/wrong file behind."""
+    respx.get(f"{BASE}/training/runs/run_e/download").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "url": "https://r2.example/signed/run_e.bin",
+                "expires_in": 3600,
+                "sha256": "0" * 64,  # wrong on purpose
+                "size_bytes": 4,
+            },
+        )
+    )
+    respx.get("https://r2.example/signed/run_e.bin").mock(
+        return_value=httpx.Response(200, content=b"data")
+    )
+    dest = tmp_path / "bad.bin"
+    result = runner.invoke(app, ["training", "download", "run_e", str(dest)])
+    assert result.exit_code != 0
+    assert not dest.exists()

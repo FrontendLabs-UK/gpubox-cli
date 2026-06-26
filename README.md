@@ -181,15 +181,15 @@ lives at `https://api.gpubox.ai/docs`.
 | `gpb billing history`                | GET `/v1/billing/balance`     | reads `recent_topups` from balance                   |
 | `gpb billing topup --amount-gbp`     | POST `/v1/billing/checkout-sessions` | Stripe checkout (pence)                       |
 | `gpb billing topup --amount-ngn`     | POST `/v1/billing/paystack/initialize` | Paystack checkout (kobo)                    |
-| `gpb training submit`                | POST `/v1/training/runs`      | idempotent                                           |
+| `gpb training submit`                | POST `/v1/training/runs`      | idempotent; vault corpus (`--since`/`--until`); tunables via `hyperparams` |
 | `gpb training list`                  | GET `/v1/training/runs`       | `--status` filter, `--limit`                         |
 | `gpb training status <run_id>`       | GET `/v1/training/runs/{run_id}` |                                                  |
 | `gpb training watch <run_id>`        | GET `/v1/training/runs/{run_id}` | polls every `--interval` seconds                  |
-| `gpb training download <run_id>`     | GET `/v1/training/runs/{run_id}/artifact` | streams octet-stream to disk               |
+| `gpb training download <run_id>`     | GET `/v1/training/runs/{run_id}/download` | JSON `{url,…}`; CLI fetches the signed URL → disk, verifies sha256 |
 | `gpb training cancel <run_id>`       | POST `/v1/training/runs/{run_id}/cancel` |                                            |
 | `gpb hosting list`                   | GET `/v1/hosting/models`      |                                                      |
-| `gpb hosting promote <run_id>`       | POST `/v1/hosting/models`     | idempotent; `--tier cold/warm/always_hot`            |
-| `gpb hosting tier <model_id>`        | PATCH `/v1/hosting/models/{model_id}` |                                              |
+| `gpb hosting promote <run_id>`       | POST `/v1/hosting/models`     | idempotent; required `--name`; `--tier cold/warm/always_hot` |
+| `gpb hosting tier <model_id>`        | POST `/v1/hosting/models/{model_id}/transition` | body `{hosting_tier}`                  |
 | `gpb hosting delete <model_id>`      | DELETE `/v1/hosting/models/{model_id}` |                                             |
 | `gpb vault enable`                   | (none — operator-only)        | no public route; prints "email support@gpubox.ai"    |
 | `gpb vault disable`                  | (none — operator-only)        | no public route; prints "email support@gpubox.ai"    |
@@ -202,9 +202,9 @@ lives at `https://api.gpubox.ai/docs`.
 | `gpb vault corpora delete <id>`      | DELETE `/v1/corpora/{id}`     | soft-delete                                          |
 | `gpb vault corpora create`           | POST `/v1/corpora`            | `{name, source_type, content}`; `--from-file` PDF → multipart `/v1/corpora/upload` |
 | `gpb assistants list`                | GET `/v1/assistants`          |                                                      |
-| `gpb assistants create`              | POST `/v1/assistants`         | idempotent                                           |
-| `gpb assistants update <id>`         | PATCH `/v1/assistants/{id}`   |                                                      |
-| `gpb assistants run <id>`            | POST `/v1/assistants/{id}/runs` |                                                    |
+| `gpb assistants create`              | POST `/v1/assistants`         | idempotent; required `--slug` + `--name`             |
+| `gpb assistants update <id>`         | POST `/v1/assistants/{id}`    | creates a new version                                |
+| `gpb assistants run <id>`            | POST `/v1/chat/completions`   | model alias `asst_<id>` (single user turn)           |
 | `gpb assistants delete <id>`         | DELETE `/v1/assistants/{id}`  |                                                      |
 | `gpb users invite <email>`           | POST `/v1/tenants/{tenant_id}/users` | tenant from `--tenant` or `GPUBOX_TENANT_ID` |
 | `gpb users list`                     | GET `/v1/tenants/{tenant_id}/users` |                                               |

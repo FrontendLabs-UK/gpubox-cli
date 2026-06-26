@@ -6,6 +6,7 @@ Wave 5/8/9 backend. The CLI's verbs match what the Factory API exposes.
 
 from __future__ import annotations
 
+import hashlib
 import time
 from pathlib import Path
 
@@ -35,30 +36,66 @@ def _client(ctx: typer.Context) -> GPUBoxClient:
     return GPUBoxClient(ClientConfig(api_key=resolved.api_key, base_url=resolved.base_url))
 
 
+def _build_hyperparams(
+    epochs: int | None,
+    batch_size: int | None,
+    learning_rate: float | None,
+) -> dict:
+    """Collect per-run tunables into a `hyperparams` override dict.
+
+    Key names mirror config/training.yaml's `default_hyperparams`
+    (epochs / batch_size / learning_rate); the gateway shallow-merges this over
+    the preset defaults. Returns {} when nothing was supplied.
+    """
+    hyperparams: dict = {}
+    if epochs is not None:
+        hyperparams["epochs"] = epochs
+    if batch_size is not None:
+        hyperparams["batch_size"] = batch_size
+    if learning_rate is not None:
+        hyperparams["learning_rate"] = learning_rate
+    return hyperparams
+
+
 @app.command("submit")
 @exit_on_error
 def submit(
     ctx: typer.Context,
     preset: str = typer.Option(..., "--preset", help="Factory preset (e.g. deberta-base)."),
-    dataset: str = typer.Option(
-        ..., "--dataset", help="Dataset URI (s3://, https://, gpubox://...)."
+    since: str | None = typer.Option(
+        None,
+        "--since",
+        help=(
+            "ISO-8601 lower bound for the vault corpus window "
+            "(e.g. 2026-01-01T00:00:00Z). Omit to include from the start."
+        ),
     ),
-    name: str | None = typer.Option(None, "--name", help="Optional run label."),
+    until: str | None = typer.Option(
+        None,
+        "--until",
+        help="ISO-8601 upper bound for the vault corpus window. Omit for 'now'.",
+    ),
     epochs: int | None = typer.Option(None, "--epochs", min=1),
     batch_size: int | None = typer.Option(None, "--batch-size", min=1),
     learning_rate: float | None = typer.Option(None, "--learning-rate"),
 ) -> None:
-    """Submit a new training run. Returns the run id."""
+    """Submit a new training run. Returns the run id.
+
+    GPUB-458: the dataset is built server-side from this tenant's own vault
+    (source='vault', defaulted by the gateway so we omit it). `--since`/`--until`
+    narrow that corpus window; there is no client-supplied dataset URL. Per-run
+    tunables nest under `hyperparams` (the gateway shallow-merges over the preset
+    defaults). TrainingRunCreate is extra='forbid', so no other top-level keys.
+    """
     out = _output(ctx)
-    body: dict = {"preset": preset, "dataset": dataset}
-    if name:
-        body["name"] = name
-    if epochs:
-        body["epochs"] = epochs
-    if batch_size:
-        body["batch_size"] = batch_size
-    if learning_rate is not None:
-        body["learning_rate"] = learning_rate
+    body: dict = {"preset": preset}
+    if since:
+        body["since"] = since
+    if until:
+        body["until"] = until
+    hyperparams = _build_hyperparams(epochs, batch_size, learning_rate)
+    if hyperparams:
+        body["hyperparams"] = hyperparams
 
     with _client(ctx) as client:
         resp = client.request("POST", "/training/runs", json_body=body, idempotent=True)
@@ -148,8 +185,18 @@ def download_run(
     ctx: typer.Context,
     run_id: str = typer.Argument(...),
     output_path: Path = typer.Argument(...),
+    workspace: str | None = typer.Option(
+        None, "--workspace", help="Override the active workspace for this command."
+    ),
 ) -> None:
-    """Download the model artefact produced by a successful run."""
+    """Download the model artefact produced by a successful run.
+
+    The gateway never proxies bytes: GET /training/runs/{id}/download returns a
+    JSON envelope {url, expires_in, sha256, size_bytes} with a pre-signed
+    storage URL. We fetch that URL directly (it carries its own signature — no
+    Authorization header, which would otherwise break the signature on
+    S3/R2) and stream it to disk, verifying the sha256 the gateway pinned.
+    """
     out = _output(ctx)
     obj = ctx.obj or {}
     resolved = cfg.resolve(
@@ -161,30 +208,51 @@ def download_run(
         emit_error(out, "no API key configured")
         raise typer.Exit(4)
 
-    url = resolved.base_url.rstrip("/") + f"/training/runs/{run_id}/artifact"
-    headers = {
-        "Authorization": f"Bearer {resolved.api_key}",
-        "User-Agent": USER_AGENT,
-        "Accept": "application/octet-stream",
-    }
+    # 1) Authenticated, workspace-scoped call to mint the signed URL.
+    with _client(ctx) as client:
+        envelope = client.request(
+            "GET", f"/training/runs/{run_id}/download",
+            extra_headers=cfg.workspace_headers(workspace),
+        )
+    signed_url = envelope.get("url") if isinstance(envelope, dict) else None
+    if not signed_url:
+        from gpubox_cli.client import GPUBoxError
+
+        raise GPUBoxError("download response did not include a signed url")
+    expected_sha = envelope.get("sha256") if isinstance(envelope, dict) else None
+
+    # 2) Stream the pre-signed URL straight to disk. No Authorization header —
+    #    the signature is in the URL; an extra bearer token breaks S3/R2 sigv4.
+    headers = {"User-Agent": USER_AGENT, "Accept": "application/octet-stream"}
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    hasher = hashlib.sha256()
     try:
-        with httpx.stream("GET", url, headers=headers, timeout=600.0, follow_redirects=True) as resp:
+        with httpx.stream(
+            "GET", signed_url, headers=headers, timeout=600.0, follow_redirects=True
+        ) as resp:
             if resp.status_code >= 400:
-                # Route through the typed-error helper for consistent UX:
-                # 401 → AuthError exit 4, 402 → PaymentRequiredError exit 5, etc.
-                with GPUBoxClient(
-                    ClientConfig(api_key=resolved.api_key, base_url=resolved.base_url)
-                ) as client:
-                    resp.read()
-                    client.raise_for_response(resp)
+                resp.read()
+                from gpubox_cli.client import GPUBoxError
+
+                raise GPUBoxError(
+                    f"signed URL fetch failed: HTTP {resp.status_code}"
+                )
             with output_path.open("wb") as fh:
                 for chunk in resp.iter_bytes(chunk_size=1 << 16):
+                    hasher.update(chunk)
                     fh.write(chunk)
     except httpx.HTTPError as exc:
         from gpubox_cli.client import GPUBoxError
 
         raise GPUBoxError(f"network error during download: {exc}") from exc
+
+    if expected_sha and hasher.hexdigest() != expected_sha:
+        from gpubox_cli.client import GPUBoxError
+
+        output_path.unlink(missing_ok=True)
+        raise GPUBoxError(
+            f"sha256 mismatch: expected {expected_sha}, got {hasher.hexdigest()}"
+        )
 
     if not out.quiet:
         emit_text(out, f"saved to {output_path}", end="\n")

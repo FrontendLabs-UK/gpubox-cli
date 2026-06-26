@@ -165,6 +165,28 @@ def save_settings(settings: Settings) -> None:
     _write_toml(settings_path(), payload, secret=False)
 
 
+# Workspace pinning (V1.5 W1). `gpb workspace use` writes ACTIVE_WORKSPACE_KEY
+# into Settings.extra; every workspace-scoped command sends it as
+# WORKSPACE_HEADER so the gateway resolves the right per-tenant workspace.
+# Without the header the gateway falls back to the Default workspace, which
+# silently 404s cross-workspace lookups (e.g. promote a run created in ws A).
+ACTIVE_WORKSPACE_KEY = "active_workspace"
+WORKSPACE_HEADER = "X-GPUBox-Workspace"
+
+
+def active_workspace() -> str | None:
+    """The pinned active workspace id from config, or None if unset."""
+    val = load_settings().extra.get(ACTIVE_WORKSPACE_KEY)
+    return str(val) if val else None
+
+
+def workspace_headers(override: str | None = None) -> dict[str, str] | None:
+    """The X-GPUBox-Workspace header dict from an explicit override, else the
+    pinned active workspace. None when neither is set (gateway -> Default)."""
+    ws = override or active_workspace()
+    return {WORKSPACE_HEADER: ws} if ws else None
+
+
 def load_profiles() -> dict[str, Profile]:
     raw = _read_toml(credentials_path())
     profiles_raw = raw.get("profiles", {})
