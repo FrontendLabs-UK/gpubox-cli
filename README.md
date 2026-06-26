@@ -255,6 +255,48 @@ pytest -v
 ruff check src/ tests/
 ```
 
+### Contract conformance (CLI ↔ gateway request shapes)
+
+Most of the gateway's mutating request models are Pydantic `extra='forbid'` (a
+few, e.g. `WorkspaceCreate`, are not): on a `forbid` model an unknown key 422s, a
+missing required field 422s on any model, and a wrong method/path 404/405s.
+Several `gpb` commands once shipped requests the live gateway rejected. The
+contract harness is the systematic guard against that whole class of drift, and
+it follows the snapshot's own `additionalProperties` flag per-model rather than
+assuming every model forbids extras.
+
+- `tests/contract/gateway-openapi.json` — the **pinned** gateway OpenAPI snapshot
+  (the CLI's authoritative view of the contract).
+- `tests/contract/conformance.py` — `assert_request_conforms(...)`: a
+  dependency-free validator that resolves the operation for `(method, path)`,
+  fails on an **unregistered method/path**, on an **undeclared key** where the
+  schema sets `additionalProperties: false`, and on a **missing required**
+  property.
+- `tests/test_contract_conformance.py` — drives every mutating command through a
+  mocked transport and asserts the request it actually builds conforms.
+- `tests/test_contract_guard_proof.py` — feeds the eight known-bad historical
+  bodies to the validator and asserts each is rejected (proving the guard works).
+
+Refresh the pin when the gateway contract changes:
+
+```bash
+# primary: regenerate from a local gpubox-gateway checkout
+GATEWAY_REPO=/path/to/gpubox-gateway scripts/refresh-contract.sh
+# fallback: pull the live prod spec
+GATEWAY_URL=https://api.gpubox.ai/openapi.json scripts/refresh-contract.sh
+```
+
+A green run after a refresh means the CLI conforms to the new contract; a **red**
+run after a refresh means the gateway moved and a CLI command must be updated.
+
+**Limitations.** The pin can lag the live gateway; the harness validates
+*top-level* request *shape*, not *semantics* — it won't catch a wrong-but-valid
+value, and it does not yet recurse into nested object/array properties (e.g. a
+malformed `messages[]` element), nor validate query params. The eight drifts it
+exists to catch were all top-level key/method/path issues. The durable end-state
+is the gateway publishing `openapi.json` as a CI artifact the CLI pulls
+automatically, instead of a manually-refreshed pin.
+
 ## License
 
 Apache-2.0. See [LICENSE](LICENSE).

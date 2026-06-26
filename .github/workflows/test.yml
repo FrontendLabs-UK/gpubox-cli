@@ -24,6 +24,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+      - name: contract conformance (CLI <-> gateway request shapes)
+        env:
+          GPB_CONFIG_DIR: /tmp/gpb-ci
+        # Fast, explicit gate: every mutating command's request must conform to
+        # the pinned gateway OpenAPI snapshot, and the guard-proof must still
+        # reject the eight historical PR-#12 drifts. Runs ahead of the full
+        # suite so a contract drift fails fast with an unambiguous signal.
+        run: pytest -v tests/test_contract_conformance.py tests/test_contract_guard_proof.py
       - name: test
         env:
           # Round-table CI lock: tool must run cleanly without $HOME
