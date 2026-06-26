@@ -106,6 +106,29 @@ def test_get_agent(monkeypatch):
     assert call["method"] == "GET" and call["path"] == "/argus/agents/a-1"
 
 
+def test_run_agent_posts_to_run_path(monkeypatch):
+    with _patch_client(monkeypatch, [{"run_id": "r-1", "status": "pending"}]) as stub:
+        res = runner.invoke(argus_cmd.app, ["run", "a-1"])
+    assert res.exit_code == 0, res.output
+    call = stub.calls[0]
+    assert call["method"] == "POST"
+    assert call["path"] == "/argus/agents/a-1/run"
+    # idempotent + active-workspace header pinned (mirrors create/read).
+    assert call["idempotent"] is True
+    assert call["extra_headers"]["X-GPUBox-Workspace"] == _ACTIVE_WS
+    assert "r-1" in res.output
+
+
+def test_run_agent_falls_back_to_id_field(monkeypatch):
+    """The gateway returns {run_id, status}; tolerate a bare {id} too (so a CLI
+    pinned against an older gateway that echoed `id` still prints the run id)."""
+    with _patch_client(monkeypatch, [{"id": "r-legacy", "status": "pending"}]) as stub:
+        res = runner.invoke(argus_cmd.app, ["run", "a-2"])
+    assert res.exit_code == 0, res.output
+    assert stub.calls[0]["path"] == "/argus/agents/a-2/run"
+    assert "r-legacy" in res.output
+
+
 def test_delete_agent(monkeypatch):
     with _patch_client(monkeypatch, [{"id": "a-1", "deleted": True}]) as stub:
         res = runner.invoke(argus_cmd.app, ["delete", "a-1"])
