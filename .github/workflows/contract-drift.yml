@@ -1,0 +1,84 @@
+name: contract-drift
+
+# Nightly monitor: catch the gateway moving UNDERNEATH the pinned snapshot.
+#
+# tests/test_contract_conformance.py catches CLI-side drift AGAINST the committed
+# pin (tests/contract/gateway-openapi.json). It does NOT, on its own, catch the
+# GATEWAY contract changing while the pin stays put — exactly the staleness gap
+# gpubox-cli PR #13's "Honest limitations" called out. The gateway now publishes
+# a canonical openapi/openapi.json (gpubox-gateway's openapi-publish workflow);
+# this job pulls that canonical artifact nightly and FAILS if the committed pin no
+# longer matches it. A red run is the signal that the gateway contract moved and
+# the pin must be refreshed (scripts/refresh-contract.sh) and re-reviewed.
+#
+# FAIL-ONLY (not auto-PR) by deliberate choice: for a 1-2 person team the extra
+# token scope + bot surface of auto-opening a PR isn't worth it. The gateway's
+# own PR stale-check prevents most drift before it reaches gateway master; this
+# nightly is belt-and-braces. On failure, a human runs:
+#     scripts/refresh-contract.sh
+#     pytest tests/test_contract_conformance.py tests/test_contract_guard_proof.py
+# reviews the diff (a real contract change vs a CLI command that must be updated),
+# and commits the refreshed pin. Upgrade to auto-PR only if this proves noisy.
+
+on:
+  schedule:
+    # 06:17 UTC daily — odd minute to avoid the top-of-hour scheduler stampede.
+    - cron: "17 6 * * *"
+  # Manual trigger so the monitor can be run on demand (e.g. right after a
+  # gateway contract PR merges) without waiting for the nightly slot.
+  workflow_dispatch: {}
+
+permissions:
+  # Read-only: this job only fetches the public canonical spec and compares.
+  # It does NOT push or open PRs (see FAIL-ONLY note above).
+  contents: read
+
+concurrency:
+  group: contract-drift
+  cancel-in-progress: true
+
+jobs:
+  pin-vs-canonical:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Refresh the pin from the gateway's canonical spec
+        env:
+          # The gateway's committed openapi/openapi.json raw URL. Overridable
+          # here so a fork / branch-protected test can point elsewhere without
+          # editing the script default.
+          CANONICAL_URL: https://raw.githubusercontent.com/FrontendLabs-UK/gpubox-gateway/master/openapi/openapi.json
+          # STRICT: the canonical URL is the ONLY acceptable source for the
+          # monitor. Without this the script would silently fall back to live prod
+          # if the canonical URL 404'd / was renamed / was down, and the monitor
+          # could pass against prod (which can trail master) while never checking
+          # the canonical spec — defeating its purpose. A canonical-URL failure
+          # is itself an alert (the job hard-fails).
+          REQUIRE_CANONICAL: "1"
+        run: scripts/refresh-contract.sh
+      - name: Fail if the pin drifted from the canonical spec
+        run: |
+          # If refresh-contract.sh changed the committed pin, the gateway contract
+          # moved underneath it. Fail loudly with the diff so the maintainer can
+          # refresh + re-review. `git diff --exit-code` is 0 when unchanged, 1 when
+          # the working tree differs from HEAD.
+          if ! git diff --exit-code -- tests/contract/gateway-openapi.json; then
+            echo "::error::The pinned gateway OpenAPI snapshot is STALE vs the gateway's canonical spec."
+            echo "::error::The gateway contract moved. Run scripts/refresh-contract.sh locally, then"
+            echo "::error::pytest tests/test_contract_conformance.py tests/test_contract_guard_proof.py,"
+            echo "::error::review the diff (real contract change vs a CLI command to fix), and commit the refreshed pin."
+            exit 1
+          fi
+          echo "Pin is in sync with the gateway's canonical spec."
+      - name: Conformance still holds against the (re)pinned spec
+        # Defence in depth: even if the bytes matched, run the conformance suite
+        # so a same-bytes-but-now-failing edge (shouldn't happen) is still caught.
+        env:
+          GPB_CONFIG_DIR: /tmp/gpb-ci
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          pytest -q tests/test_contract_conformance.py tests/test_contract_guard_proof.py

@@ -1,0 +1,6 @@
+# The pinned gateway OpenAPI snapshot is byte-identical contract material — it is
+# kept exactly equal to the gateway's canonical published spec (which the gateway
+# pins to eol=lf and byte-compares in its own CI). Pin LF here too so a CRLF
+# autocrlf checkout cannot rewrite line endings underneath the byte-identity
+# policy and make the nightly contract-drift `git diff` flap.
+tests/contract/gateway-openapi.json text eol=lf

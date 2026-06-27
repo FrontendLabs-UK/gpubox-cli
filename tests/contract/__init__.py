@@ -13,7 +13,11 @@ Two parts:
   against the PINNED gateway OpenAPI snapshot and checks request SHAPE
   (unregistered method/path, undeclared keys under ``additionalProperties:
   false``, missing required props).
-* ``gateway-openapi.json`` — the pinned snapshot (the CLI's authoritative view
-  of the contract). Refresh it with ``scripts/refresh-contract.sh`` whenever the
-  gateway contract changes.
+* ``gateway-openapi.json`` — the pinned snapshot, kept BYTE-IDENTICAL to the
+  gateway's canonical published spec (gpubox-gateway commits
+  ``openapi/openapi.json`` and fails its own CI if that file drifts from its
+  code). Refresh it with ``scripts/refresh-contract.sh`` (pulls the canonical
+  spec by default); the nightly ``contract-drift`` workflow re-pulls and fails if
+  the pin falls out of sync — so the gateway moving underneath the pin is caught
+  automatically, not only on a manual refresh.
 """

@@ -265,8 +265,10 @@ contract harness is the systematic guard against that whole class of drift, and
 it follows the snapshot's own `additionalProperties` flag per-model rather than
 assuming every model forbids extras.
 
-- `tests/contract/gateway-openapi.json` — the **pinned** gateway OpenAPI snapshot
-  (the CLI's authoritative view of the contract).
+- `tests/contract/gateway-openapi.json` — the **pinned** gateway OpenAPI snapshot.
+  It is **byte-identical to the gateway's canonical published spec** (the gateway
+  commits `openapi/openapi.json` and fails its own CI if that file drifts from its
+  code), so the pin tracks the gateway's own published bytes, not a hand-copy.
 - `tests/contract/conformance.py` — `assert_request_conforms(...)`: a
   dependency-free validator that resolves the operation for `(method, path)`,
   fails on an **unregistered method/path**, on an **undeclared key** where the
@@ -277,25 +279,37 @@ assuming every model forbids extras.
 - `tests/test_contract_guard_proof.py` — feeds the eight known-bad historical
   bodies to the validator and asserts each is rejected (proving the guard works).
 
-Refresh the pin when the gateway contract changes:
+Refresh the pin **from the gateway's canonical published spec** (the durable
+source — the gateway is the single source of truth for its contract):
 
 ```bash
-# primary: regenerate from a local gpubox-gateway checkout
+# primary: pull the gateway's committed canonical openapi/openapi.json (default)
+scripts/refresh-contract.sh
+# override the canonical source URL if needed
+CANONICAL_URL=<raw-url> scripts/refresh-contract.sh
+# offline fallback: regenerate from a local gpubox-gateway checkout
 GATEWAY_REPO=/path/to/gpubox-gateway scripts/refresh-contract.sh
-# fallback: pull the live prod spec
+# last resort: live prod (can trail master between deploys)
 GATEWAY_URL=https://api.gpubox.ai/openapi.json scripts/refresh-contract.sh
 ```
 
 A green run after a refresh means the CLI conforms to the new contract; a **red**
 run after a refresh means the gateway moved and a CLI command must be updated.
 
-**Limitations.** The pin can lag the live gateway; the harness validates
-*top-level* request *shape*, not *semantics* — it won't catch a wrong-but-valid
-value, and it does not yet recurse into nested object/array properties (e.g. a
-malformed `messages[]` element), nor validate query params. The eight drifts it
-exists to catch were all top-level key/method/path issues. The durable end-state
-is the gateway publishing `openapi.json` as a CI artifact the CLI pulls
-automatically, instead of a manually-refreshed pin.
+**Automatic drift detection.** `.github/workflows/contract-drift.yml` runs
+nightly (and on demand), re-pulls the canonical spec, and **fails** if the
+committed pin no longer matches — so the gateway changing underneath the pin is
+caught automatically, not only when a human remembers to refresh. It is
+fail-only (no auto-PR): on a red run a maintainer refreshes, reviews, and commits.
+
+**Limitations.** The harness validates *top-level* request *shape*, not
+*semantics* — it won't catch a wrong-but-valid value, and it does not yet recurse
+into nested object/array properties (e.g. a malformed `messages[]` element), nor
+validate query params. The eight drifts it exists to catch were all top-level
+key/method/path issues. The earlier staleness gap (the pin lagging the gateway
+with nobody noticing) is now closed by the canonical-source refresh + the nightly
+drift monitor; the gateway side is `scripts/dump_openapi.py` +
+`.github/workflows/openapi-publish.yml` in `gpubox-gateway`.
 
 ## License
 
