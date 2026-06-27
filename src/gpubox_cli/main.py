@@ -28,6 +28,7 @@ from gpubox_cli.client import GPUBoxError, render_error
 from gpubox_cli.commands import (
     argus,
     assistants,
+    audio,
     billing,
     chat,
     config_cmd,
@@ -129,6 +130,7 @@ app.command("search", help="Unified search + grounded synthesis (docs + chat).")
 app.add_typer(workspace.app, name="workspace", help="Workspaces — per-tenant isolation containers.")
 app.add_typer(argus.app, name="argus", help="Argus — your Standing Research Agent (V1.5 W4).")
 app.add_typer(assistants.app, name="assistants", help="Custom assistants.")
+app.add_typer(audio.app, name="audio", help="Text-to-speech (audio speech).")
 app.add_typer(users.app, name="users", help="Users, invites, OIDC clients.")
 
 # Top-level inference commands — these are flat (no sub-noun) because they
