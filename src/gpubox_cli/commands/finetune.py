@@ -2,10 +2,14 @@
 
 The "we train it for you" flow, scoped to your active workspace:
 
-  gpb finetune create  --preset qwen32b-lora-r16 --dataset gpubox://...   # submit a run
-  gpb finetune status  <run_id>                                          # run lifecycle state
-  gpb finetune list                                                      # runs (or --adapters)
-  gpb finetune use     <hosted_model_name>                               # pin as workspace default
+  gpb finetune create  --preset qwen32b-lora-r16 [--since ... --until ...]  # submit a run
+  gpb finetune status  <run_id>                                            # run lifecycle state
+  gpb finetune list                                                        # runs (or --adapters)
+  gpb finetune use     <hosted_model_name>                                 # pin as workspace default
+
+GPUB-458: the training corpus is built server-side from the active
+workspace's own vault conversations (source='vault'); there is no
+client-supplied dataset URL. `--since`/`--until` narrow the corpus window.
 
 `create`/`status`/`list` drive the existing training + LoRA-registry surface;
 `use` pins a hosted fine-tune as the active workspace's default chat model
@@ -27,8 +31,10 @@ from gpubox_cli.output import OutputCtx, emit_json, emit_text
 app = typer.Typer(no_args_is_help=True, help="Workspace-scoped user fine-tunes (V1.5 W3).")
 
 # Same config key + header the `gpb workspace use` command writes/reads.
-_ACTIVE_WORKSPACE_KEY = "active_workspace"
-WORKSPACE_HEADER = "X-GPUBox-Workspace"
+# Canonical home is gpubox_cli.config (shared with assistants/hosting); kept as
+# module aliases for backwards-compatible references.
+_ACTIVE_WORKSPACE_KEY = cfg.ACTIVE_WORKSPACE_KEY
+WORKSPACE_HEADER = cfg.WORKSPACE_HEADER
 
 _TERMINAL_STATES = {"succeeded", "failed", "cancelled", "completed"}
 
@@ -48,16 +54,36 @@ def _client(ctx: typer.Context) -> GPUBoxClient:
 
 
 def _active_workspace() -> str | None:
-    settings = cfg.load_settings()
-    val = settings.extra.get(_ACTIVE_WORKSPACE_KEY)
-    return str(val) if val else None
+    return cfg.active_workspace()
 
 
 def _workspace_headers(override: str | None) -> dict | None:
     """The X-GPUBox-Workspace header from --workspace override, else the pinned
     active workspace. None when neither is set (server defaults to Default)."""
-    ws = override or _active_workspace()
-    return {WORKSPACE_HEADER: ws} if ws else None
+    return cfg.workspace_headers(override)
+
+
+def _build_hyperparams(
+    epochs: int | None,
+    batch_size: int | None,
+    learning_rate: float | None,
+) -> dict:
+    """Collect the per-run tunables into a `hyperparams` override dict.
+
+    Key names mirror config/training.yaml's `default_hyperparams` exactly
+    (epochs / batch_size / learning_rate) — the gateway shallow-merges this
+    over the preset defaults and the trainer validates known keys, ignoring
+    anything it doesn't recognise. Returns {} when nothing was supplied so the
+    caller can omit the key entirely and inherit the preset defaults.
+    """
+    hyperparams: dict = {}
+    if epochs is not None:
+        hyperparams["epochs"] = epochs
+    if batch_size is not None:
+        hyperparams["batch_size"] = batch_size
+    if learning_rate is not None:
+        hyperparams["learning_rate"] = learning_rate
+    return hyperparams
 
 
 # ---------------------------------------------------------------------------
@@ -70,10 +96,19 @@ def _workspace_headers(override: str | None) -> dict | None:
 def create(
     ctx: typer.Context,
     preset: str = typer.Option(..., "--preset", help="Training preset (e.g. qwen32b-lora-r16)."),
-    dataset: str = typer.Option(
-        ..., "--dataset", help="Dataset URI (s3://, https://, gpubox://...)."
+    since: str | None = typer.Option(
+        None,
+        "--since",
+        help=(
+            "ISO-8601 lower bound for the vault corpus window "
+            "(e.g. 2026-01-01T00:00:00Z). Omit to include from the start."
+        ),
     ),
-    name: str | None = typer.Option(None, "--name", help="Optional run label."),
+    until: str | None = typer.Option(
+        None,
+        "--until",
+        help="ISO-8601 upper bound for the vault corpus window. Omit for 'now'.",
+    ),
     epochs: int | None = typer.Option(None, "--epochs", min=1),
     batch_size: int | None = typer.Option(None, "--batch-size", min=1),
     learning_rate: float | None = typer.Option(None, "--learning-rate"),
@@ -81,17 +116,24 @@ def create(
         None, "--workspace", help="Override the active workspace for this command."
     ),
 ) -> None:
-    """Submit a new fine-tune training run. Returns the run id."""
+    """Submit a new fine-tune training run. Returns the run id.
+
+    GPUB-458: the dataset is built server-side from this tenant's own vault
+    conversations (source='vault', which the gateway defaults so we omit it).
+    `--since`/`--until` narrow that corpus window. There is no client-supplied
+    dataset URL. Per-run tunables are nested under `hyperparams` using the same
+    key names the preset declares (epochs / batch_size / learning_rate); the
+    gateway shallow-merges them over the preset defaults.
+    """
     out = _output(ctx)
-    body: dict = {"preset": preset, "dataset": dataset}
-    if name:
-        body["name"] = name
-    if epochs:
-        body["epochs"] = epochs
-    if batch_size:
-        body["batch_size"] = batch_size
-    if learning_rate is not None:
-        body["learning_rate"] = learning_rate
+    body: dict = {"preset": preset}
+    if since:
+        body["since"] = since
+    if until:
+        body["until"] = until
+    hyperparams = _build_hyperparams(epochs, batch_size, learning_rate)
+    if hyperparams:
+        body["hyperparams"] = hyperparams
     with _client(ctx) as client:
         resp = client.request(
             "POST", "/training/runs", json_body=body, idempotent=True,
