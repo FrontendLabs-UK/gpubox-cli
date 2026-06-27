@@ -277,25 +277,73 @@ assuming every model forbids extras.
 - `tests/test_contract_guard_proof.py` — feeds the eight known-bad historical
   bodies to the validator and asserts each is rejected (proving the guard works).
 
-Refresh the pin when the gateway contract changes:
+#### Refreshing the pin from the canonical gateway spec
+
+The gateway is the **single source of truth** for its contract: it publishes a
+byte-canonical `openapi/openapi.json` on master (gateway PR #386), and our pin is
+a **byte-exact mirror** of that artifact. Refresh it whenever the gateway
+contract changes:
 
 ```bash
-# primary: regenerate from a local gpubox-gateway checkout
-GATEWAY_REPO=/path/to/gpubox-gateway scripts/refresh-contract.sh
-# fallback: pull the live prod spec
-GATEWAY_URL=https://api.gpubox.ai/openapi.json scripts/refresh-contract.sh
+# Default: pull the gateway's published canonical spec and re-pin to it.
+scripts/refresh-contract.sh
 ```
 
-A green run after a refresh means the CLI conforms to the new contract; a **red**
-run after a refresh means the gateway moved and a CLI command must be updated.
+`refresh-contract.sh` tries these sources in order and fails closed (a
+truncated/invalid response can never overwrite a good pin):
 
-**Limitations.** The pin can lag the live gateway; the harness validates
-*top-level* request *shape*, not *semantics* — it won't catch a wrong-but-valid
-value, and it does not yet recurse into nested object/array properties (e.g. a
-malformed `messages[]` element), nor validate query params. The eight drifts it
-exists to catch were all top-level key/method/path issues. The durable end-state
-is the gateway publishing `openapi.json` as a CI artifact the CLI pulls
-automatically, instead of a manually-refreshed pin.
+1. **Canonical published spec** (primary) —
+   `FrontendLabs-UK/gpubox-gateway:openapi/openapi.json@master`. The bytes are
+   written **verbatim**, so the pin matches the published artifact exactly. The
+   gateway repo is **private**, so the unauthenticated raw URL 404s; the script
+   falls through to the authenticated GitHub Contents API using
+   `GH_TOKEN` / `GITHUB_TOKEN` / `gh auth token` (read-only `contents` is
+   enough).
+2. **Local gateway checkout** (fallback) —
+   `GATEWAY_REPO=/path/to/gpubox-gateway scripts/refresh-contract.sh`
+   regenerates from the running app and re-serialises with the gateway's exact
+   canonicalisation (`sort_keys`, `indent=2`, `ensure_ascii=False`, trailing
+   newline), so its bytes match the canonical artifact.
+3. **Live prod spec** (fallback) —
+   `GATEWAY_URL=https://api.gpubox.ai/openapi.json scripts/refresh-contract.sh`,
+   likewise re-serialised to canonical bytes.
+
+A **green** test run after a refresh means the CLI conforms to the new contract;
+a **red** run after a refresh means the gateway moved and a CLI command must be
+updated to match (then re-pin and commit both together).
+
+#### Two drift surfaces, two guards
+
+The committed pin can drift from reality in two independent ways, each with its
+own guard:
+
+- **CLI-side drift** (a command builds a request that violates the pin). Caught
+  by the **#13 contract-conformance tests** on every PR/push
+  (`tests`), which run the real commands and assert their requests against the
+  committed pin.
+- **Gateway-side drift** (the gateway contract moves underneath the pin). Caught
+  by the **nightly `contract-drift` workflow**
+  (`.github/workflows/contract-drift.yml`), which pulls the gateway's published
+  canonical spec and byte-compares it to the committed pin
+  (`scripts/refresh-contract.sh --check`). On drift the run **fails** and a
+  `contract-drift` tracking issue is opened/updated — a human then runs
+  `scripts/refresh-contract.sh`, re-validates, and commits the refreshed pin in a
+  reviewable PR. (Fail-the-run + issue, not an auto-commit bot: no privileged
+  push, no branch-protection fight, no CI re-trigger loop — the same choice the
+  gateway side made.)
+
+> **Founder action — nightly drift guard needs a cross-repo token.** The default
+> `GITHUB_TOKEN` cannot read a *different* private repo, so add a repo (or org)
+> secret **`GATEWAY_RO_TOKEN`**: a fine-grained PAT or GitHub App token with
+> **read-only `contents`** on `FrontendLabs-UK/gpubox-gateway`. Until the secret
+> exists the nightly job **skips** the compare (and says so via a warning
+> annotation) rather than failing spuriously.
+
+**Limitations.** The harness validates *top-level* request *shape*, not
+*semantics* — it won't catch a wrong-but-valid value, and it does not yet recurse
+into nested object/array properties (e.g. a malformed `messages[]` element), nor
+validate query params. The eight drifts it exists to catch were all top-level
+key/method/path issues.
 
 ## License
 

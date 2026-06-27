@@ -1,0 +1,135 @@
+name: contract-drift
+
+# Nightly GATEWAY-side drift guard.
+#
+# The #13 contract-conformance tests (in `tests`) catch CLI-side drift AGAINST
+# the pinned snapshot — a command building a request that violates the pin. They
+# do NOT catch the GATEWAY moving underneath the pin, because they only ever read
+# the committed snapshot. THIS job closes that gap: it pulls the gateway's
+# published canonical spec
+# (FrontendLabs-UK/gpubox-gateway:openapi/openapi.json, gateway PR #386) and
+# byte-compares it to the committed pin. If they differ, the gateway contract has
+# moved and the run FAILS (+ opens/updates a tracking issue) so the pin gets
+# refreshed and the CLI re-validated against the new contract.
+#
+# Mechanism choice: fail-the-run + tracking issue, NOT an auto-commit/auto-PR
+# bot. This mirrors the gateway side's deliberate choice (PR #386 dropped its
+# bot publisher in favour of a fail-only check, Codex-endorsed): no privileged
+# push, no branch-protection fight, no CI re-trigger loop. A human refreshes the
+# pin in a reviewable PR (`scripts/refresh-contract.sh`), which is exactly where
+# a contract change should be seen.
+#
+# CROSS-REPO ACCESS (founder action required):
+#   The gateway repo is PRIVATE, so the canonical spec is only fetchable with a
+#   token that can read it. The default GITHUB_TOKEN cannot read a DIFFERENT
+#   private repo. Add a repo (or org) secret `GATEWAY_RO_TOKEN` — a fine-grained
+#   PAT or GitHub App token with READ-ONLY `contents` on
+#   FrontendLabs-UK/gpubox-gateway. Until that secret exists the job SKIPS the
+#   compare (and says so) rather than failing spuriously on a 404.
+
+on:
+  schedule:
+    # 06:17 UTC daily (off the top of the hour to dodge the scheduler stampede).
+    - cron: "17 6 * * *"
+  workflow_dispatch: {}  # manual "check now" button
+
+permissions:
+  contents: read   # read this repo's pin
+  issues: write    # open/update the drift tracking issue
+
+concurrency:
+  group: contract-drift
+  cancel-in-progress: false
+
+jobs:
+  gateway-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: drift check against the published gateway contract
+        id: drift
+        env:
+          # Cross-repo read token for the PRIVATE gateway repo. The refresh
+          # script reads GH_TOKEN; if the secret is unset this is empty and the
+          # script's authenticated-API path is skipped (the raw URL 404s on a
+          # private repo), so we detect "no token" and SKIP rather than fail.
+          GH_TOKEN: ${{ secrets.GATEWAY_RO_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GH_TOKEN}" ]; then
+            echo "::warning title=contract-drift skipped::GATEWAY_RO_TOKEN secret is not set; cannot read the PRIVATE gpubox-gateway repo. Add a read-only contents PAT/App token named GATEWAY_RO_TOKEN to enable the nightly gateway-drift guard."
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "skipped=false" >> "$GITHUB_OUTPUT"
+          # --check fetches the CANONICAL spec (fallbacks disabled in --check) and
+          # byte-compares to the pin. Exit codes are meaningful:
+          #   0 = in sync; 1 = real DRIFT; 2 = fetch/validation failure (NOT drift).
+          # We only file a "contract drifted" issue on exit 1. Exit 2 fails the run
+          # too (so the problem is visible) but is reported as infra, not drift.
+          set +e
+          scripts/refresh-contract.sh --check
+          rc=$?
+          set -e
+          case "$rc" in
+            0) echo "drift=false" >> "$GITHUB_OUTPUT" ;;
+            1) echo "drift=true"  >> "$GITHUB_OUTPUT"; exit 1 ;;
+            *) echo "::error title=contract-drift fetch failure::could not obtain or validate the canonical gateway spec (exit $rc) — check GATEWAY_RO_TOKEN scope/expiry and the gateway repo. This is NOT a contract drift."
+               echo "drift=false" >> "$GITHUB_OUTPUT"
+               exit "$rc" ;;
+          esac
+
+      - name: open or update drift tracking issue
+        # Only when a REAL drift (exit 1) was detected — never on the no-token
+        # skip or an exit-2 fetch/validation failure.
+        if: failure() && steps.drift.outputs.drift == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = "Gateway OpenAPI contract drifted from the pinned snapshot";
+            const body = [
+              "The nightly `contract-drift` job found that the committed",
+              "`tests/contract/gateway-openapi.json` pin no longer matches the",
+              "gateway's published canonical spec",
+              "(`FrontendLabs-UK/gpubox-gateway:openapi/openapi.json`, gateway PR #386).",
+              "",
+              "**The GATEWAY contract moved underneath the CLI pin.** To resolve:",
+              "",
+              "```bash",
+              "scripts/refresh-contract.sh   # re-pin to the canonical spec",
+              "pytest tests/test_contract_conformance.py tests/test_contract_guard_proof.py",
+              "```",
+              "",
+              "- A **green** run after the re-pin = the CLI still conforms; commit the refreshed pin.",
+              "- A **red** run after the re-pin = a CLI command must be updated to the new contract, then re-pin.",
+              "",
+              `Triggered by run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            ].join("\n");
+            const { owner, repo } = context.repo;
+            const LABEL = "contract-drift";
+            // Ensure the label exists (createLabel 422s if it already does — ignore that).
+            try {
+              await github.rest.issues.createLabel({
+                owner, repo, name: LABEL, color: "d93f0b",
+                description: "Pinned gateway OpenAPI snapshot drifted from the published contract",
+              });
+            } catch (e) {
+              if (e.status !== 422) throw e;  // 422 = already exists, fine
+            }
+            // De-dupe by TITLE across all open issues (robust even if the label was
+            // manually removed from the tracking issue), then keep the label too.
+            const existing = await github.paginate(github.rest.issues.listForRepo, {
+              owner, repo, state: "open", per_page: 100,
+            });
+            const match = existing.find((i) => i.title === title && !i.pull_request);
+            if (match) {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: match.number,
+                body: `Still drifting as of ${new Date().toISOString()}.\n\n${body}`,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner, repo, title, body, labels: [LABEL],
+              });
+            }
