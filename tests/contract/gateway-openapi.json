@@ -145,7 +145,7 @@
       },
       "AdapterResponse": {
         "additionalProperties": false,
-        "description": "Public view of a gpubox_lora_adapters row.\n\nExcludes `artifact_sha256` from the default shape \u2014 sha256 is a\n32-byte digest the operator rarely needs in routine inspection\nand including raw bytes in JSON requires a base16 encoder which\nbloats every list response. Future PR can add a `?include=sha256`\nquery toggle if forensics need it.",
+        "description": "Public view of a gpubox_lora_adapters row.\n\nExcludes `artifact_sha256` from the default shape — sha256 is a\n32-byte digest the operator rarely needs in routine inspection\nand including raw bytes in JSON requires a base16 encoder which\nbloats every list response. Future PR can add a `?include=sha256`\nquery toggle if forensics need it.",
         "properties": {
           "artifact_key": {
             "title": "Artifact Key",
@@ -677,7 +677,7 @@
         "description": "POST /v1/lora/adapters/{id}/canary body.",
         "properties": {
           "traffic_percent": {
-            "description": "Canary traffic share (1..100). Spike-1 \u00a72 recommends \u226510 in prod when prod_qps \u2265 2 for sample-size validity, but the API accepts 1..9 for shadow-mode experiments.",
+            "description": "Canary traffic share (1..100). Spike-1 §2 recommends ≥10 in prod when prod_qps ≥ 2 for sample-size validity, but the API accepts 1..9 for shadow-mode experiments.",
             "maximum": 100.0,
             "minimum": 1.0,
             "title": "Traffic Percent",
@@ -1766,7 +1766,7 @@
       },
       "CorpusCreateRequest": {
         "additionalProperties": false,
-        "description": "POST /v1/corpora \u2014 create a corpus from manual text or URL.\n\nFor PDF uploads, use the multipart/form-data variant (separate route).",
+        "description": "POST /v1/corpora — create a corpus from manual text or URL.\n\nFor PDF uploads, use the multipart/form-data variant (separate route).",
         "properties": {
           "chunk_strategy": {
             "default": "sentence",
@@ -2068,7 +2068,7 @@
       },
       "DataDeleteRequest": {
         "additionalProperties": false,
-        "description": "Body for POST /v1/tenant/data-delete.\n\n``mode`` selects between hard-purge and crypto-shred. No default;\nthe operator MUST be explicit about which destructive path they\nwant \u2014 the two have very different audit and recoverability\ncharacteristics.",
+        "description": "Body for POST /v1/tenant/data-delete.\n\n``mode`` selects between hard-purge and crypto-shred. No default;\nthe operator MUST be explicit about which destructive path they\nwant — the two have very different audit and recoverability\ncharacteristics.",
         "properties": {
           "mode": {
             "description": "'purge' = hard-delete every tenant-owned row + blob. 'crypto-shred' = rotate the tenant DEK so encrypted PII becomes plaintext-irrecoverable while leaving rows in place.",
@@ -2092,7 +2092,7 @@
       },
       "DatasetSummary": {
         "additionalProperties": false,
-        "description": "GPUB-467: what the taint-filtered corpus build produced for this run.\n\nA compact lineage record the tenant can read back on every GET to see how\nmuch of their vault in scope actually became training pairs, and how much the\nfail-closed taint filter dropped (and why). Persisted inside the existing\n``dataset_taint_flags`` jsonb \u2014 no new column / migration.",
+        "description": "GPUB-467: what the taint-filtered corpus build produced for this run.\n\nA compact lineage record the tenant can read back on every GET to see how\nmuch of their vault in scope actually became training pairs, and how much the\nfail-closed taint filter dropped (and why). Persisted inside the existing\n``dataset_taint_flags`` jsonb — no new column / migration.",
         "properties": {
           "excluded_tainted": {
             "title": "Excluded Tainted",
@@ -2121,7 +2121,7 @@
         "type": "object"
       },
       "DocumentExtractResponse": {
-        "description": "Result of POST /v1/documents/extract \u2014 a file ingested into a corpus.",
+        "description": "Result of POST /v1/documents/extract — a file ingested into a corpus.",
         "properties": {
           "chunks_added": {
             "title": "Chunks Added",
@@ -2307,7 +2307,7 @@
         "type": "object"
       },
       "DocumentStatusOut": {
-        "description": "Per-document indexing status \u2014 the read path the chat composer polls to\nflip an attachment chip from 'indexing' to 'ready'.\n\nThis resolves a SINGLE document by id via repo.get_document \u2014 a cheap,\ntargeted read the composer chip can poll every few seconds without\nre-paging the whole workspace list. (Since option A, 2026-06-26, the list\nendpoint also includes kind='chat' docs, so it too could observe a chat\ndoc; the by-id poll is still the right read path for a live chip.) Tenant +\nworkspace scoped at the repo (RLS GUC + explicit predicates), so a\nforeign-tenant or foreign-workspace id resolves to 404.",
+        "description": "Per-document indexing status — the read path the chat composer polls to\nflip an attachment chip from 'indexing' to 'ready'.\n\nThis resolves a SINGLE document by id via repo.get_document — a cheap,\ntargeted read the composer chip can poll every few seconds without\nre-paging the whole workspace list. (Since option A, 2026-06-26, the list\nendpoint also includes kind='chat' docs, so it too could observe a chat\ndoc; the by-id poll is still the right read path for a live chip.) Tenant +\nworkspace scoped at the repo (RLS GUC + explicit predicates), so a\nforeign-tenant or foreign-workspace id resolves to 404.",
         "properties": {
           "chunk_status": {
             "title": "Chunk Status",
@@ -2973,7 +2973,7 @@
         "type": "object"
       },
       "ImageGenerationDatum": {
-        "description": "OpenAI shape: one object per image. `url` is a pre-signed R2 URL\nwhose TTL is set by the diffusion server's\nR2_IMAGES_PRESIGNED_TTL_SECONDS (7 days as of GPUB-416, matching the\nR2 object's 7-day lifecycle; was 24h, which made images vanish on\nrefresh). `b64_json` (OpenAI option) is NOT supported in V1.2 \u2014 we\nprefer URL so the chat tool-card can lazy-load without blowing up the\nSSE chunk size.",
+        "description": "OpenAI shape: one object per image. `url` is a pre-signed R2 URL\nwhose TTL is set by the diffusion server's\nR2_IMAGES_PRESIGNED_TTL_SECONDS (7 days as of GPUB-416, matching the\nR2 object's 7-day lifecycle; was 24h, which made images vanish on\nrefresh). `b64_json` (OpenAI option) is NOT supported in V1.2 — we\nprefer URL so the chat tool-card can lazy-load without blowing up the\nSSE chunk size.",
         "properties": {
           "revised_prompt": {
             "anyOf": [
@@ -2999,7 +2999,7 @@
       },
       "ImageGenerationRequest": {
         "additionalProperties": false,
-        "description": "Minimal subset of OpenAI's images.generate. extra='forbid' so\nunknown fields are 422'd at validation time \u2014 prevents a future\nSDK release silently shadowing a field name we use internally.",
+        "description": "Minimal subset of OpenAI's images.generate. extra='forbid' so\nunknown fields are 422'd at validation time — prevents a future\nSDK release silently shadowing a field name we use internally.",
         "properties": {
           "model": {
             "default": "flux-schnell",
@@ -3435,7 +3435,7 @@
       },
       "RegisterAdapterRequest": {
         "additionalProperties": false,
-        "description": "POST /v1/lora/adapters body.\n\nVersioning is COMPUTED server-side (MAX(version)+1); the client\ndoes NOT supply a version. Allowing a client-supplied version\nwould let an operator accidentally re-use an old version number\nand break the monotonicity invariant the routing fallback chain\ndepends on.\n\nartifact_sha256 is hex-encoded (64 chars) \u2014 the DB stores BYTEA\nso we decode here. Hex avoids the \"is it base64 with or without\npadding\" ambiguity that bites every JSON-shaped binary blob.",
+        "description": "POST /v1/lora/adapters body.\n\nVersioning is COMPUTED server-side (MAX(version)+1); the client\ndoes NOT supply a version. Allowing a client-supplied version\nwould let an operator accidentally re-use an old version number\nand break the monotonicity invariant the routing fallback chain\ndepends on.\n\nartifact_sha256 is hex-encoded (64 chars) — the DB stores BYTEA\nso we decode here. Hex avoids the \"is it base64 with or without\npadding\" ambiguity that bites every JSON-shaped binary blob.",
         "properties": {
           "artifact_key": {
             "description": "Object-storage key. Must match the regex '^tenants/<tid>/runs/<rid>/<rest>$' (enforced by DB CHECK).",
@@ -3575,7 +3575,7 @@
         "type": "object"
       },
       "RunResponse": {
-        "description": "A queued on-demand run. The existing scheduler/worker claims + executes it\n(the SAME bounded, zero-tools, read-only loop the scheduled cadence uses) \u2014\nthis endpoint only enqueues.",
+        "description": "A queued on-demand run. The existing scheduler/worker claims + executes it\n(the SAME bounded, zero-tools, read-only loop the scheduled cadence uses) —\nthis endpoint only enqueues.",
         "properties": {
           "run_id": {
             "description": "The id of the queued run.",
@@ -3662,7 +3662,7 @@
       },
       "SessionVerifyRequest": {
         "additionalProperties": false,
-        "description": "Same shape as VerifyRequest \u2014 accepts the magic-link token.",
+        "description": "Same shape as VerifyRequest — accepts the magic-link token.",
         "properties": {
           "token": {
             "maxLength": 128,
@@ -3794,7 +3794,7 @@
       },
       "StartSubscriptionRequest": {
         "additionalProperties": false,
-        "description": "Body of POST /v1/chat/billing/start-subscription.\n\nBoth fields are required; both have explicit allowlists rather than\nfree-form strings so a typo at the frontend lands as 400\n`invalid_country` / `invalid_plan` rather than silently routing to\nthe wrong rail. `extra=\"forbid\"` rejects any extra field \u2014 there is\nno `currency` override field because the currency is determined by\nthe (plan_id, country) lookup and must NOT be client-controlled\n(would let a NG client try to pay GBP, etc.).",
+        "description": "Body of POST /v1/chat/billing/start-subscription.\n\nBoth fields are required; both have explicit allowlists rather than\nfree-form strings so a typo at the frontend lands as 400\n`invalid_country` / `invalid_plan` rather than silently routing to\nthe wrong rail. `extra=\"forbid\"` rejects any extra field — there is\nno `currency` override field because the currency is determined by\nthe (plan_id, country) lookup and must NOT be client-controlled\n(would let a NG client try to pay GBP, etc.).",
         "properties": {
           "country": {
             "description": "Market code derived BY THE FRONTEND from the URL host (gpubox.ai -> 'UK', gpubox.ng -> 'NG'). The gateway uses this as a routing key only; it performs no IP geo lookup.",
@@ -3805,7 +3805,7 @@
           },
           "pii_consent": {
             "default": false,
-            "description": "GPUB-438/439 \u2014 explicit PII-storage consent, REQUIRED true for the 'vault' plan (the document vault stores uploaded files = possible third-party PII). Recorded at this consented checkout; tenant.vault_enabled is only flipped by the paid-subscription webhook AND only when this consent is on record. Ignored for non-vault plans.",
+            "description": "GPUB-438/439 — explicit PII-storage consent, REQUIRED true for the 'vault' plan (the document vault stores uploaded files = possible third-party PII). Recorded at this consented checkout; tenant.vault_enabled is only flipped by the paid-subscription webhook AND only when this consent is on record. Ignored for non-vault plans.",
             "title": "Pii Consent",
             "type": "boolean"
           },
@@ -4354,7 +4354,7 @@
       },
       "UpdateAssistantRequest": {
         "additionalProperties": false,
-        "description": "Update creates a new version. All fields optional \u2014 unspecified\nfields inherit from the current version. `name` and `slug` are mutable\non the parent row; everything else lives on the new version.",
+        "description": "Update creates a new version. All fields optional — unspecified\nfields inherit from the current version. `name` and `slug` are mutable\non the parent row; everything else lives on the new version.",
         "properties": {
           "default_corpus_ids": {
             "anyOf": [
@@ -4678,7 +4678,7 @@
                 "type": "null"
               }
             ],
-            "description": "Fraction (0..1) of requested schema keys present + non-NA. Null with no schema. NOT a correctness signal \u2014 a confident hallucination scores high.",
+            "description": "Fraction (0..1) of requested schema keys present + non-NA. Null with no schema. NOT a correctness signal — a confident hallucination scores high.",
             "title": "Coverage"
           },
           "extracted": {
@@ -4820,7 +4820,7 @@
                 "type": "null"
               }
             ],
-            "description": "Honour robots.txt (default true). false skips robots \u2014 use only on pages you own.",
+            "description": "Honour robots.txt (default true). false skips robots — use only on pages you own.",
             "title": "Respect Robots"
           },
           "save": {
@@ -5475,7 +5475,7 @@
     },
     "/oidc/.well-known/jwks.json": {
       "get": {
-        "description": "Public JWK set \u2014 id_token verifiers fetch this, cache it, verify\nusing the kid claim to pick the right key.\n\nReturns the public-key form of every active or recently superseded\nkey in gpubox_oidc_jwks. Old keys remain in the set until all\nid_tokens signed with them have expired (1h after rotation).",
+        "description": "Public JWK set — id_token verifiers fetch this, cache it, verify\nusing the kid claim to pick the right key.\n\nReturns the public-key form of every active or recently superseded\nkey in gpubox_oidc_jwks. Old keys remain in the set until all\nid_tokens signed with them have expired (1h after rotation).",
         "operationId": "jwks_oidc__well_known_jwks_json_get",
         "responses": {
           "200": {
@@ -5499,7 +5499,7 @@
     },
     "/oidc/.well-known/openid-configuration": {
       "get": {
-        "description": "OIDC discovery document \u2014 what every standard SDK fetches first.",
+        "description": "OIDC discovery document — what every standard SDK fetches first.",
         "operationId": "discovery_oidc__well_known_openid_configuration_get",
         "responses": {
           "200": {
@@ -5523,7 +5523,7 @@
     },
     "/oidc/authorize": {
       "get": {
-        "description": "OIDC authorization endpoint \u2014 RFC 6749 + OIDC Core 1.0 \u00a73.1.\n\nValidates client_id, redirect_uri exact-match, response_type=code,\nPKCE for public clients, then 302s the user-agent to the SSO login\nUI carrying an opaque request_id.",
+        "description": "OIDC authorization endpoint — RFC 6749 + OIDC Core 1.0 §3.1.\n\nValidates client_id, redirect_uri exact-match, response_type=code,\nPKCE for public clients, then 302s the user-agent to the SSO login\nUI carrying an opaque request_id.",
         "operationId": "authorize_oidc_authorize_get",
         "parameters": [
           {
@@ -5657,7 +5657,7 @@
     },
     "/oidc/issue-code": {
       "post": {
-        "description": "Internal \u2014 invoked by the SSO login UI after email verification.\n\nMints a single-use 5-minute auth code bound to (client_id, redirect_uri,\nPKCE challenge, user). Returns the redirect URL the user-agent should\nreceive (with `?code=...&state=...` appended).",
+        "description": "Internal — invoked by the SSO login UI after email verification.\n\nMints a single-use 5-minute auth code bound to (client_id, redirect_uri,\nPKCE challenge, user). Returns the redirect URL the user-agent should\nreceive (with `?code=...&state=...` appended).",
         "operationId": "issue_code_oidc_issue_code_post",
         "requestBody": {
           "content": {
@@ -5697,7 +5697,7 @@
     },
     "/oidc/revoke": {
       "post": {
-        "description": "RFC 7009 token revocation.\n\nWe accept revocation requests UNAUTHENTICATED \u2014 the token itself is\nproof of ownership; revoking is a no-risk operation and authenticated\nrevoke endpoints are over-engineered. Body schema is form-encoded in\nthe RFC; we accept JSON for SDK ergonomics. Always returns 200 to\navoid information leak about whether the token existed.",
+        "description": "RFC 7009 token revocation.\n\nWe accept revocation requests UNAUTHENTICATED — the token itself is\nproof of ownership; revoking is a no-risk operation and authenticated\nrevoke endpoints are over-engineered. Body schema is form-encoded in\nthe RFC; we accept JSON for SDK ergonomics. Always returns 200 to\navoid information leak about whether the token existed.",
         "operationId": "revoke_oidc_revoke_post",
         "requestBody": {
           "content": {
@@ -5737,7 +5737,7 @@
     },
     "/oidc/token": {
       "post": {
-        "description": "OIDC token endpoint \u2014 exchanges the auth code for {access, id} tokens.\n\nSupports `grant_type=authorization_code` only in v0. PKCE verification\nis mandatory whenever `code_challenge` was set on /authorize. Client\nauth: HTTP Basic (client_secret_basic) OR form-encoded\n(client_secret_post). Public clients send no client_secret and rely\non PKCE.",
+        "description": "OIDC token endpoint — exchanges the auth code for {access, id} tokens.\n\nSupports `grant_type=authorization_code` only in v0. PKCE verification\nis mandatory whenever `code_challenge` was set on /authorize. Client\nauth: HTTP Basic (client_secret_basic) OR form-encoded\n(client_secret_post). Public clients send no client_secret and rely\non PKCE.",
         "operationId": "token_oidc_token_post",
         "parameters": [
           {
@@ -5795,7 +5795,7 @@
     },
     "/oidc/userinfo": {
       "get": {
-        "description": "Return identity claims for the holder of the access token.\n\nStandard OIDC: sub, email, email_verified, name (where scope grants).\nOnly OIDC bearer tokens are accepted \u2014 service api_keys 403.",
+        "description": "Return identity claims for the holder of the access token.\n\nStandard OIDC: sub, email, email_verified, name (where scope grants).\nOnly OIDC bearer tokens are accepted — service api_keys 403.",
         "operationId": "userinfo_oidc_userinfo_get",
         "parameters": [
           {
@@ -5911,7 +5911,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -5921,7 +5921,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "404": {
             "content": {
@@ -5931,7 +5931,7 @@
                 }
               }
             },
-            "description": "Not found \u2014 the resource does not exist or is not visible to this tenant."
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
           },
           "422": {
             "content": {
@@ -6029,7 +6029,7 @@
                 }
               }
             },
-            "description": "Bad request \u2014 malformed input or a failed validation (returned as the standard error envelope)."
+            "description": "Bad request — malformed input or a failed validation (returned as the standard error envelope)."
           },
           "401": {
             "content": {
@@ -6039,7 +6039,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -6049,7 +6049,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "404": {
             "content": {
@@ -6059,7 +6059,7 @@
                 }
               }
             },
-            "description": "Not found \u2014 the resource does not exist or is not visible to this tenant."
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
           },
           "422": {
             "content": {
@@ -6157,7 +6157,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -6167,7 +6167,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "404": {
             "content": {
@@ -6177,7 +6177,7 @@
                 }
               }
             },
-            "description": "Not found \u2014 the resource does not exist or is not visible to this tenant."
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
           },
           "422": {
             "content": {
@@ -6273,7 +6273,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -6283,7 +6283,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "404": {
             "content": {
@@ -6293,7 +6293,7 @@
                 }
               }
             },
-            "description": "Not found \u2014 the resource does not exist or is not visible to this tenant."
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
           },
           "422": {
             "content": {
@@ -6314,7 +6314,7 @@
     },
     "/v1/argus/agents/{agent_id}/run": {
       "post": {
-        "description": "Trigger an on-demand check for a standing agent \u2014 the design's \"Run a\ncheck\". Queues a run that the EXISTING scheduler/worker claims and executes\nthrough the SAME bounded, zero-tools, read-only loop the scheduled cadence\nuses (this endpoint never runs the loop inline, never grants tools, and never\nrelaxes the max-steps / token / wall-clock bounds \u2014 those are re-pinned from\nthe authoritative agent row + env caps at claim time).\n\nScoped to the authed tenant + active workspace: an agent that does not exist,\nis retired, or belongs to another tenant returns 404 (no existence leak \u2014 we\nnever reveal whether the id is real for a different tenant).\n\nABUSE GUARD: at most ONE in-flight run per agent. If a run is already\npending/leased/running (scheduled OR manual), this returns 409\n``run_already_in_flight`` rather than queuing a second \u2014 the shared agent\ninference lane must not be floodable.\n\nWorks for any cadence: a 'manual' agent (next_run_at = NULL, never\nauto-runs) is the primary case, but \"run a check now\" on a scheduled agent is\nequally valid and does NOT perturb its next_run_at.",
+        "description": "Trigger an on-demand check for a standing agent — the design's \"Run a\ncheck\". Queues a run that the EXISTING scheduler/worker claims and executes\nthrough the SAME bounded, zero-tools, read-only loop the scheduled cadence\nuses (this endpoint never runs the loop inline, never grants tools, and never\nrelaxes the max-steps / token / wall-clock bounds — those are re-pinned from\nthe authoritative agent row + env caps at claim time).\n\nScoped to the authed tenant + active workspace: an agent that does not exist,\nis retired, or belongs to another tenant returns 404 (no existence leak — we\nnever reveal whether the id is real for a different tenant).\n\nABUSE GUARD: at most ONE in-flight run per agent. If a run is already\npending/leased/running (scheduled OR manual), this returns 409\n``run_already_in_flight`` rather than queuing a second — the shared agent\ninference lane must not be floodable.\n\nWorks for any cadence: a 'manual' agent (next_run_at = NULL, never\nauto-runs) is the primary case, but \"run a check now\" on a scheduled agent is\nequally valid and does NOT perturb its next_run_at.",
         "operationId": "run_agent_now_v1_argus_agents__agent_id__run_post",
         "parameters": [
           {
@@ -6394,7 +6394,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -6404,7 +6404,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "404": {
             "content": {
@@ -6414,7 +6414,7 @@
                 }
               }
             },
-            "description": "Not found \u2014 the resource does not exist or is not visible to this tenant."
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
           },
           "409": {
             "content": {
@@ -6424,7 +6424,7 @@
                 }
               }
             },
-            "description": "Conflict \u2014 the request conflicts with the current state of the resource."
+            "description": "Conflict — the request conflicts with the current state of the resource."
           },
           "422": {
             "content": {
@@ -6445,7 +6445,7 @@
     },
     "/v1/argus/inbox": {
       "get": {
-        "description": "The in-app inbox \u2014 grounded, cited informs Argus delivered. Read-gated by\nthe authenticated session + active workspace; residency-preserving (no\nemail in V1).",
+        "description": "The in-app inbox — grounded, cited informs Argus delivered. Read-gated by\nthe authenticated session + active workspace; residency-preserving (no\nemail in V1).",
         "operationId": "read_inbox_v1_argus_inbox_get",
         "parameters": [
           {
@@ -6538,7 +6538,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -6548,7 +6548,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "404": {
             "content": {
@@ -6558,7 +6558,7 @@
                 }
               }
             },
-            "description": "Not found \u2014 the resource does not exist or is not visible to this tenant."
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
           },
           "422": {
             "content": {
@@ -6656,7 +6656,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -6666,7 +6666,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "404": {
             "content": {
@@ -6676,7 +6676,7 @@
                 }
               }
             },
-            "description": "Not found \u2014 the resource does not exist or is not visible to this tenant."
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
           },
           "422": {
             "content": {
@@ -7836,7 +7836,7 @@
     },
     "/v1/audio/transcriptions": {
       "post": {
-        "description": "OpenAI-compatible audio transcription.\n\nDrop-in replacement for `POST https://api.openai.com/v1/audio/transcriptions`.\n\n**Models live:**\n- `whisper-large-v3-turbo` \u2014 OpenAI Whisper large-v3-turbo, 100+ languages,\n  automatic language detection.\n\n**Request:** `multipart/form-data` with required `file` field. Optional\n`language` (ISO-639-1 hint), `prompt` (text bias), `temperature`,\n`response_format`.\n\n**Response formats:**\n- `json` (default) \u2014 `{\"text\": \"...\"}`.\n- `verbose_json` \u2014 adds `language`, `duration`, and per-segment timestamps.\n- `text` \u2014 plain transcribed text only.\n\n**Billing:** \u00a30.005 per audio minute, billed on the actual audio duration\n(not file size). A 6-second clip is 0.1 minutes = \u00a30.0005.\n\n**Limits:**\n- File size: 200 MB max.\n- Duration: 30 minutes max per request.\n- Supported formats: any audio/video the upstream Whisper can decode\n  (mp3, mp4, m4a, wav, webm, flac, ogg, etc.).",
+        "description": "OpenAI-compatible audio transcription.\n\nDrop-in replacement for `POST https://api.openai.com/v1/audio/transcriptions`.\n\n**Models live:**\n- `whisper-large-v3-turbo` — OpenAI Whisper large-v3-turbo, 100+ languages,\n  automatic language detection.\n\n**Request:** `multipart/form-data` with required `file` field. Optional\n`language` (ISO-639-1 hint), `prompt` (text bias), `temperature`,\n`response_format`.\n\n**Response formats:**\n- `json` (default) — `{\"text\": \"...\"}`.\n- `verbose_json` — adds `language`, `duration`, and per-segment timestamps.\n- `text` — plain transcribed text only.\n\n**Billing:** £0.005 per audio minute, billed on the actual audio duration\n(not file size). A 6-second clip is 0.1 minutes = £0.0005.\n\n**Limits:**\n- File size: 200 MB max.\n- Duration: 30 minutes max per request.\n- Supported formats: any audio/video the upstream Whisper can decode\n  (mp3, mp4, m4a, wav, webm, flac, ogg, etc.).",
         "operationId": "transcriptions_v1_audio_transcriptions_post",
         "parameters": [
           {
@@ -7894,7 +7894,7 @@
     },
     "/v1/audio/transcriptions/result/{job_id}": {
       "get": {
-        "description": "SSE endpoint that streams transcripts from the Redis tailpipe.\n\nReplaces the previous pattern of \"client keeps the audio WS open\nuntil WhisperLive finishes.\" After PR #48 shipped the band-aid\n30 s drain, this is the proper architecture: the audio WS closes\nimmediately after the client receives the eos_ack, and the\ntranscripts arrive over a fresh HTTP/SSE stream keyed by job_id.\n\nThe Redis tailpipe (`voice:job:{job_id}:msgs` + `:meta`) survives\nthe audio WS closing AND the gateway restarting (within TTL). A\nuser who navigates away during processing and comes back can\nre-open the SSE stream and get their transcript \u2014 the message\nlist and meta are both content-addressable by job_id.\n\nAuth: same `require_billable_auth` as the audio WS. Codex R1\nHIGH #3: ALSO tenant-binds the job \u2014 the bridge writes the\nowning tenant_id at init_job time, and this handler verifies\nthe requesting tenant matches before opening the stream. A\nleaked job_id URL (browser history, support dumps, referrers,\nlogs) is no longer enough to read someone else's transcript.\n\nLifecycle:\n  * If the job_id is unknown / expired, return 404 immediately\n    rather than open an infinite empty stream (better DX, better\n    for monitoring).\n  * Otherwise, open the SSE stream and poll Redis every 200 ms.\n    Emit each new message as `event: transcript\\ndata: <json>`.\n    When meta marks complete, emit `event: done\\ndata: {...}`\n    and close.\n  * Hard ceiling of 180 s (`_VOICE_RESULT_MAX_STREAM_S`) \u2014 past\n    that, emit `event: done\\ndata: {\"status\":\"timeout\"}` so the\n    client can decide to reopen.\n\nDisconnects (client closes the SSE early) raise on the next send\ninside `_stream()` and we exit cleanly \u2014 the Redis state remains\navailable for a later reconnect.",
+        "description": "SSE endpoint that streams transcripts from the Redis tailpipe.\n\nReplaces the previous pattern of \"client keeps the audio WS open\nuntil WhisperLive finishes.\" After PR #48 shipped the band-aid\n30 s drain, this is the proper architecture: the audio WS closes\nimmediately after the client receives the eos_ack, and the\ntranscripts arrive over a fresh HTTP/SSE stream keyed by job_id.\n\nThe Redis tailpipe (`voice:job:{job_id}:msgs` + `:meta`) survives\nthe audio WS closing AND the gateway restarting (within TTL). A\nuser who navigates away during processing and comes back can\nre-open the SSE stream and get their transcript — the message\nlist and meta are both content-addressable by job_id.\n\nAuth: same `require_billable_auth` as the audio WS. Codex R1\nHIGH #3: ALSO tenant-binds the job — the bridge writes the\nowning tenant_id at init_job time, and this handler verifies\nthe requesting tenant matches before opening the stream. A\nleaked job_id URL (browser history, support dumps, referrers,\nlogs) is no longer enough to read someone else's transcript.\n\nLifecycle:\n  * If the job_id is unknown / expired, return 404 immediately\n    rather than open an infinite empty stream (better DX, better\n    for monitoring).\n  * Otherwise, open the SSE stream and poll Redis every 200 ms.\n    Emit each new message as `event: transcript\\ndata: <json>`.\n    When meta marks complete, emit `event: done\\ndata: {...}`\n    and close.\n  * Hard ceiling of 180 s (`_VOICE_RESULT_MAX_STREAM_S`) — past\n    that, emit `event: done\\ndata: {\"status\":\"timeout\"}` so the\n    client can decide to reopen.\n\nDisconnects (client closes the SSE early) raise on the next send\ninside `_stream()` and we exit cleanly — the Redis state remains\navailable for a later reconnect.",
         "operationId": "transcriptions_result_v1_audio_transcriptions_result__job_id__get",
         "parameters": [
           {
@@ -8128,7 +8128,7 @@
     },
     "/v1/auth/me": {
       "get": {
-        "description": "Return the bearer's tenant + user context for UI bootstrap.\n\nAuthenticates via any bearer `require_auth` accepts today:\n  * `gpb_live_*` service key without bound principal\n                              \u2192 `user_id=None`, `email` falls back to\n                                 `gpubox_tenants.billing_email`.\n  * `gpb_live_*` service key WITH `service_principal_user_id` bound\n                              \u2192 `user_id` populated, `email` from the\n                                 bound user's `gpubox_users.email`.\n                                 Same shape as the OIDC path.\n                                 `auth_method` remains `\"service_key\"`.\n  * `gpb_oat_*` OIDC token    \u2192 user-bound, `email` from gpubox_users.\n  * Session cookie (W2.0)     \u2192 resolved through the same require_auth\n                                 (cookie-first branch wired 2026-05-20\n                                 when Google SSO surfaced the gap).\n                                 `auth_method='session_cookie'`,\n                                 `scope='user'`.\n\nResponse shape (locked v1 \u2014 currency added 2026-05-20 after dashboard\ncrash; original lock cdxk thread 019e3c41-2e70-7203-b5c9-daf675e05945\nomitted currency, that decision was reversed because the FE legitimately\nneeds the ledger currency to render):\n  {tenant_id, user_id, email, plan, currency, created_at, auth_method}\n\n`created_at` is the tenant's signup timestamp. cdxk: keep \u2014 caller is\nauthenticated AS the tenant, this is self-read account metadata, and\na \"member since\" UI needs it. Kimi raised re-identification join risk;\noverruled because `tenant_id` + `email` in the same response are\nstrictly stronger join keys, so stripping only `created_at` is\nsecurity theatre.\n\n`currency` is returned as the literal `\"gbp\"` \u2014 the credit ledger\nis always GBP-pence (matches `app/billing/balance.py:76` which also\nhardcodes `\"gbp\"`), and the dashboard UI needs SOMETHING to render\nnext to the plan card. The tenant-canonical-currency decision (i.e.\na per-tenant default that could drift from the ledger currency) is\nstill queued; when that lands, this becomes `tenant.canonical_currency`\nand the hardcode comes out.\n\nWithout this, `Dashboard.tsx` line ~404 did `user.currency.toUpperCase()`\nand crashed every signed-in user's /dashboard/ render on 2026-05-20.\nFE fix (gpubox-site PR #13) added a defensive fallback + error\nboundary; this PR closes the contract loop so future FE consumers\ndon't have to defend.\n\n`signup_region` is still NOT returned: the column does not exist on\n`gpubox_tenants` yet (W2.7). Stubbing it as null would hard-code a\nlie about a field that the FE legitimately uses to gate region-\nspecific UI \u2014 added when the backing column lands, not before.\n\n**NEVER returns `api_key_id`** (synth or service). The hard constraint\nfrom W2.4a DoD \u2014 site bootstraps UI state without ever needing a key,\nand synth-key minting (W2.0a) is an internal billing concern that\nmust not leak through this surface.",
+        "description": "Return the bearer's tenant + user context for UI bootstrap.\n\nAuthenticates via any bearer `require_auth` accepts today:\n  * `gpb_live_*` service key without bound principal\n                              → `user_id=None`, `email` falls back to\n                                 `gpubox_tenants.billing_email`.\n  * `gpb_live_*` service key WITH `service_principal_user_id` bound\n                              → `user_id` populated, `email` from the\n                                 bound user's `gpubox_users.email`.\n                                 Same shape as the OIDC path.\n                                 `auth_method` remains `\"service_key\"`.\n  * `gpb_oat_*` OIDC token    → user-bound, `email` from gpubox_users.\n  * Session cookie (W2.0)     → resolved through the same require_auth\n                                 (cookie-first branch wired 2026-05-20\n                                 when Google SSO surfaced the gap).\n                                 `auth_method='session_cookie'`,\n                                 `scope='user'`.\n\nResponse shape (locked v1 — currency added 2026-05-20 after dashboard\ncrash; original lock cdxk thread 019e3c41-2e70-7203-b5c9-daf675e05945\nomitted currency, that decision was reversed because the FE legitimately\nneeds the ledger currency to render):\n  {tenant_id, user_id, email, plan, currency, created_at, auth_method}\n\n`created_at` is the tenant's signup timestamp. cdxk: keep — caller is\nauthenticated AS the tenant, this is self-read account metadata, and\na \"member since\" UI needs it. Kimi raised re-identification join risk;\noverruled because `tenant_id` + `email` in the same response are\nstrictly stronger join keys, so stripping only `created_at` is\nsecurity theatre.\n\n`currency` is returned as the literal `\"gbp\"` — the credit ledger\nis always GBP-pence (matches `app/billing/balance.py:76` which also\nhardcodes `\"gbp\"`), and the dashboard UI needs SOMETHING to render\nnext to the plan card. The tenant-canonical-currency decision (i.e.\na per-tenant default that could drift from the ledger currency) is\nstill queued; when that lands, this becomes `tenant.canonical_currency`\nand the hardcode comes out.\n\nWithout this, `Dashboard.tsx` line ~404 did `user.currency.toUpperCase()`\nand crashed every signed-in user's /dashboard/ render on 2026-05-20.\nFE fix (gpubox-site PR #13) added a defensive fallback + error\nboundary; this PR closes the contract loop so future FE consumers\ndon't have to defend.\n\n`signup_region` is still NOT returned: the column does not exist on\n`gpubox_tenants` yet (W2.7). Stubbing it as null would hard-code a\nlie about a field that the FE legitimately uses to gate region-\nspecific UI — added when the backing column lands, not before.\n\n**NEVER returns `api_key_id`** (synth or service). The hard constraint\nfrom W2.4a DoD — site bootstraps UI state without ever needing a key,\nand synth-key minting (W2.0a) is an internal billing concern that\nmust not leak through this surface.",
         "operationId": "auth_me_v1_auth_me_get",
         "parameters": [
           {
@@ -8176,7 +8176,7 @@
     },
     "/v1/auth/oauth/google/callback": {
       "get": {
-        "description": "Consume flow \u2192 verify id_token \u2192 claim/login \u2192 mint session cookie.\nCodex R1 #2 HIGH \u2014 REQUIRES gpbox_oauth_flow cookie match sha256(state)\nbefore any user-visible work (callback CSRF defence).",
+        "description": "Consume flow → verify id_token → claim/login → mint session cookie.\nCodex R1 #2 HIGH — REQUIRES gpbox_oauth_flow cookie match sha256(state)\nbefore any user-visible work (callback CSRF defence).",
         "operationId": "google_callback_v1_auth_oauth_google_callback_get",
         "parameters": [
           {
@@ -8314,7 +8314,7 @@
     },
     "/v1/auth/password/change": {
       "post": {
-        "description": "Verify current_password + apply new password + bump vintage.\n\nrequire_identity_auth has already enforced session vintage + tenant\nclassification + MFA-conditional gate for routine routes. The\nchange-password endpoint adds the W2.9.4.5 step-up requirement\non top: when the identity has any active MFA method, the caller\nMUST present X-StepUp-Grant. Until the W2.9.4.5 substrate ships,\nMFA-enrolled identities are 401'd \u2014 they take the W2.9.4 reset\nflow as the alternative.",
+        "description": "Verify current_password + apply new password + bump vintage.\n\nrequire_identity_auth has already enforced session vintage + tenant\nclassification + MFA-conditional gate for routine routes. The\nchange-password endpoint adds the W2.9.4.5 step-up requirement\non top: when the identity has any active MFA method, the caller\nMUST present X-StepUp-Grant. Until the W2.9.4.5 substrate ships,\nMFA-enrolled identities are 401'd — they take the W2.9.4 reset\nflow as the alternative.",
         "operationId": "password_change_v1_auth_password_change_post",
         "parameters": [
           {
@@ -8435,7 +8435,7 @@
     },
     "/v1/auth/password/reset/confirm": {
       "post": {
-        "description": "Consume reset token + apply new password. UNAUTHENTICATED.\nFailure classes collapse to ONE generic 400; success is distinct.\n\nCodex R1 MED #6 fix \u2014 failure-class timing uniformity: ALL failure\npaths now run EXACTLY the same work (token lookup + cred lookup +\npolicy + HIBP probe-with-breaker + dummy argon verify) before\ndispatching. The previous structure ran hash_password() on the\nno-cred branch in addition to the dummy verify (double argon work)\nand skipped the HIBP probe entirely on weak-policy failures (which\nraised before reaching the breaker call). Now a single accumulator\nruns every step regardless of branch, and the final dispatch picks\nsuccess vs failure exactly once.",
+        "description": "Consume reset token + apply new password. UNAUTHENTICATED.\nFailure classes collapse to ONE generic 400; success is distinct.\n\nCodex R1 MED #6 fix — failure-class timing uniformity: ALL failure\npaths now run EXACTLY the same work (token lookup + cred lookup +\npolicy + HIBP probe-with-breaker + dummy argon verify) before\ndispatching. The previous structure ran hash_password() on the\nno-cred branch in addition to the dummy verify (double argon work)\nand skipped the HIBP probe entirely on weak-policy failures (which\nraised before reaching the breaker call). Now a single accumulator\nruns every step regardless of branch, and the final dispatch picks\nsuccess vs failure exactly once.",
         "operationId": "password_reset_confirm_v1_auth_password_reset_confirm_post",
         "requestBody": {
           "content": {
@@ -8520,7 +8520,7 @@
     },
     "/v1/auth/password/signup": {
       "post": {
-        "description": "Mint or claim an identity + password cred + verify token.\n\nReturns CONSTANT 200 `{\"ok\": True}` on every happy path AND every\n\"already-password\" branch \u2014 response uniformity (Codex R1 MED). The\n409 cross-provider branch is the ONE documented exception.",
+        "description": "Mint or claim an identity + password cred + verify token.\n\nReturns CONSTANT 200 `{\"ok\": True}` on every happy path AND every\n\"already-password\" branch — response uniformity (Codex R1 MED). The\n409 cross-provider branch is the ONE documented exception.",
         "operationId": "password_signup_v1_auth_password_signup_post",
         "requestBody": {
           "content": {
@@ -8611,7 +8611,7 @@
     },
     "/v1/auth/resend": {
       "post": {
-        "description": "Resend a magic link to an email. Rate-limited identically to /signup.\nConstant-shape response. Old unconsumed links for the same email keep\nworking \u2014 first-clicked-wins via /verify supersede. See module docstring.",
+        "description": "Resend a magic link to an email. Rate-limited identically to /signup.\nConstant-shape response. Old unconsumed links for the same email keep\nworking — first-clicked-wins via /verify supersede. See module docstring.",
         "operationId": "resend_v1_auth_resend_post",
         "requestBody": {
           "content": {
@@ -8701,7 +8701,7 @@
     },
     "/v1/auth/session/verify": {
       "post": {
-        "description": "Magic-link \u2192 session cookie. ONE transaction for consume + session\nINSERT for the happy path \u2014 any failure rolls the token back to\nunconsumed so the user can retry the SAME link (Codex review #1).\nNO api_key row is minted on this path (Codex review #2 \u2014 session IS\nthe credential).\n\nSuspended-user contract (W2.1 follow-up 2026-05-28): mirror legacy\n/v1/auth/verify's commit-then-403 pattern (signup.py:890-905). On a\nsuspended user the link consume IS committed with\nconsumed_reason='user_suspended' so the user cannot retry the same\nlink in an infinite loop; the 403 fires AFTER the transaction commits.\n\nsignup_region (W2.7 follow-up 2026-05-28): forward CF-IPCountry to\nthe helper so first-time tenants minted via the W2.1 path get their\nsignup_region populated, matching the legacy /v1/auth/verify\nbehaviour. Existing-tenant path does NOT overwrite the region \u2014 the\nhelper handles that distinction itself.",
+        "description": "Magic-link → session cookie. ONE transaction for consume + session\nINSERT for the happy path — any failure rolls the token back to\nunconsumed so the user can retry the SAME link (Codex review #1).\nNO api_key row is minted on this path (Codex review #2 — session IS\nthe credential).\n\nSuspended-user contract (W2.1 follow-up 2026-05-28): mirror legacy\n/v1/auth/verify's commit-then-403 pattern (signup.py:890-905). On a\nsuspended user the link consume IS committed with\nconsumed_reason='user_suspended' so the user cannot retry the same\nlink in an infinite loop; the 403 fires AFTER the transaction commits.\n\nsignup_region (W2.7 follow-up 2026-05-28): forward CF-IPCountry to\nthe helper so first-time tenants minted via the W2.1 path get their\nsignup_region populated, matching the legacy /v1/auth/verify\nbehaviour. Existing-tenant path does NOT overwrite the region — the\nhelper handles that distinction itself.",
         "operationId": "session_verify_v1_auth_session_verify_post",
         "requestBody": {
           "content": {
@@ -8742,7 +8742,7 @@
     },
     "/v1/auth/signup": {
       "post": {
-        "description": "Start a self-serve signup. Sends a magic-link email to `body.email`.\n\nConstant-shape response (same JSON whether the email is new, already\nhas a tenant, or got rate-limited \u2014 except rate-limit returns 429),\nso the endpoint can't be used to enumerate accounts.\n\nOld unconsumed links for the same email are NOT killed here (we don't\nwant a Resend send-failure to brick the user's previous link). Whichever\nlink the user clicks first wins; /verify supersedes the rest at consume\ntime. See module docstring for the full invariant.",
+        "description": "Start a self-serve signup. Sends a magic-link email to `body.email`.\n\nConstant-shape response (same JSON whether the email is new, already\nhas a tenant, or got rate-limited — except rate-limit returns 429),\nso the endpoint can't be used to enumerate accounts.\n\nOld unconsumed links for the same email are NOT killed here (we don't\nwant a Resend send-failure to brick the user's previous link). Whichever\nlink the user clicks first wins; /verify supersedes the rest at consume\ntime. See module docstring for the full invariant.",
         "operationId": "signup_v1_auth_signup_post",
         "requestBody": {
           "content": {
@@ -8783,7 +8783,7 @@
     },
     "/v1/auth/verify": {
       "post": {
-        "description": "Consume a magic-link token and return a fresh API key.\n\nPOST-with-body so corporate email scanners that follow link GETs can't\nburn the token before the human clicks. The frontend /welcome page must\nrequire a user gesture (button click) before calling this \u2014 the gesture\n+ POST combination is what makes the flow scanner-safe.\n\nSingle-use: the UPDATE...RETURNING acts as a row-level lock. Two\nconcurrent verify calls on the same token: only one finds consumed_at\nIS NULL, the other returns nothing. Same-email sibling tokens are\nsuperseded after consume so they can't be used from another device.\n\nFor first-time emails: creates a tenant (UNIQUE(lower(billing_email))\nmeans concurrent tokens for the same NEW email serialise on the\nINSERT). For repeat sign-ins: attaches a fresh API key \u2014 old keys\nremain valid, never auto-revoked.",
+        "description": "Consume a magic-link token and return a fresh API key.\n\nPOST-with-body so corporate email scanners that follow link GETs can't\nburn the token before the human clicks. The frontend /welcome page must\nrequire a user gesture (button click) before calling this — the gesture\n+ POST combination is what makes the flow scanner-safe.\n\nSingle-use: the UPDATE...RETURNING acts as a row-level lock. Two\nconcurrent verify calls on the same token: only one finds consumed_at\nIS NULL, the other returns nothing. Same-email sibling tokens are\nsuperseded after consume so they can't be used from another device.\n\nFor first-time emails: creates a tenant (UNIQUE(lower(billing_email))\nmeans concurrent tokens for the same NEW email serialise on the\nINSERT). For repeat sign-ins: attaches a fresh API key — old keys\nremain valid, never auto-revoked.",
         "operationId": "verify_v1_auth_verify_post",
         "requestBody": {
           "content": {
@@ -8957,7 +8957,7 @@
     },
     "/v1/batch/csv/{job_id}/cancel": {
       "post": {
-        "description": "Request best-effort cancellation of a batch CSV job.\n\nThe endpoint flips ``cancel_requested = true`` on the row but\ndoes NOT mutate ``status`` \u2014 the worker observes the flag at the\nnext between-batch checkpoint and lands the row in ``cancelled``\n(with whatever partial output it produced). Racing the worker on\n``status`` would risk overwriting a just-completed row (PR-0E\nprecedent \u2014 let the worker own the status enum).\n\nReturns 202 + the row's current status. A cancel POST against a\nterminal-state job (complete / failed / cancelled) is a no-op\nbut does NOT 4xx \u2014 the operator might race the worker.",
+        "description": "Request best-effort cancellation of a batch CSV job.\n\nThe endpoint flips ``cancel_requested = true`` on the row but\ndoes NOT mutate ``status`` — the worker observes the flag at the\nnext between-batch checkpoint and lands the row in ``cancelled``\n(with whatever partial output it produced). Racing the worker on\n``status`` would risk overwriting a just-completed row (PR-0E\nprecedent — let the worker own the status enum).\n\nReturns 202 + the row's current status. A cancel POST against a\nterminal-state job (complete / failed / cancelled) is a no-op\nbut does NOT 4xx — the operator might race the worker.",
         "operationId": "cancel_batch_csv_v1_batch_csv__job_id__cancel_post",
         "parameters": [
           {
@@ -9016,7 +9016,7 @@
     },
     "/v1/batch/csv/{job_id}/download": {
       "get": {
-        "description": "Stream the output CSV via a signed-URL redirect.\n\nAUTH: signed-URL ONLY \u2014 NO bearer required. The (tenant_id, exp,\nkid, sig) query-string is HMAC-verified against the PR-0C\n``batch-csv-download`` keyring scope. Tampered / expired / wrong-\nkid URLs return 403.\n\nCross-tenant defence in depth: AFTER the HMAC check passes, we\nlook up the job row and assert row.tenant_id == query tenant_id +\nrow.status == 'complete' + row.output_csv_object_key IS NOT NULL.\n\nReturns a 302 redirect to a SHORT-LIVED storage-layer signed URL\n(R2 / SeaweedFS SigV4) so the actual bytes stream from the storage\nbackend, never from this gateway process. PR-0E pattern for download.",
+        "description": "Stream the output CSV via a signed-URL redirect.\n\nAUTH: signed-URL ONLY — NO bearer required. The (tenant_id, exp,\nkid, sig) query-string is HMAC-verified against the PR-0C\n``batch-csv-download`` keyring scope. Tampered / expired / wrong-\nkid URLs return 403.\n\nCross-tenant defence in depth: AFTER the HMAC check passes, we\nlook up the job row and assert row.tenant_id == query tenant_id +\nrow.status == 'complete' + row.output_csv_object_key IS NOT NULL.\n\nReturns a 302 redirect to a SHORT-LIVED storage-layer signed URL\n(R2 / SeaweedFS SigV4) so the actual bytes stream from the storage\nbackend, never from this gateway process. PR-0E pattern for download.",
         "operationId": "download_batch_csv_v1_batch_csv__job_id__download_get",
         "parameters": [
           {
@@ -9103,7 +9103,7 @@
     },
     "/v1/billing/balance": {
       "get": {
-        "description": "Current credit balance for the authenticated tenant.\n\nReturns:\n- `balance_pence` \u2014 integer pence balance (rounded down for display).\n- `balance_pence_precise` \u2014 exact balance as a string (`\"999.9943\"`),\n  use this for accountancy.\n- `reserved_pence` \u2014 credit currently held against in-flight requests.\n- `available_pence` / `available_pence_precise` \u2014 balance minus reserved.\n- `currency` \u2014 always `\"gbp\"` (the credit ledger is always GBP-pence).\n- `plan` \u2014 `payg`, `unlimited`, or `enterprise`.\n- `recent_topups` \u2014 last 10 top-ups. For each:\n    - `provider` \u2014 `\"stripe\"` (GBP) or `\"paystack\"` (NGN).\n    - `charged_amount_minor` + `charged_currency` \u2014 what the customer\n      actually paid in provider-native units (pence for GBP, kobo for NGN).\n    - `credited_amount_pence` \u2014 GBP credit added to the balance.\n    - `amount_pence` + `currency` \u2014 legacy fields, retained for backward\n      compatibility. ALWAYS the GBP credit amount in pence \u2014 for Paystack\n      rows this differs from `charged_amount_minor`. Prefer the `charged_*`\n      + `credited_*` fields for new client code.\n    - `status` \u2014 `paid`, `pending`, `expired`, `failed`, `refunded`,\n      `partially_refunded`, `disputed`.",
+        "description": "Current credit balance for the authenticated tenant.\n\nReturns:\n- `balance_pence` — integer pence balance (rounded down for display).\n- `balance_pence_precise` — exact balance as a string (`\"999.9943\"`),\n  use this for accountancy.\n- `reserved_pence` — credit currently held against in-flight requests.\n- `available_pence` / `available_pence_precise` — balance minus reserved.\n- `currency` — always `\"gbp\"` (the credit ledger is always GBP-pence).\n- `plan` — `payg`, `unlimited`, or `enterprise`.\n- `recent_topups` — last 10 top-ups. For each:\n    - `provider` — `\"stripe\"` (GBP) or `\"paystack\"` (NGN).\n    - `charged_amount_minor` + `charged_currency` — what the customer\n      actually paid in provider-native units (pence for GBP, kobo for NGN).\n    - `credited_amount_pence` — GBP credit added to the balance.\n    - `amount_pence` + `currency` — legacy fields, retained for backward\n      compatibility. ALWAYS the GBP credit amount in pence — for Paystack\n      rows this differs from `charged_amount_minor`. Prefer the `charged_*`\n      + `credited_*` fields for new client code.\n    - `status` — `paid`, `pending`, `expired`, `failed`, `refunded`,\n      `partially_refunded`, `disputed`.",
         "operationId": "billing_balance_v1_billing_balance_get",
         "parameters": [
           {
@@ -9151,7 +9151,7 @@
     },
     "/v1/billing/checkout-sessions": {
       "post": {
-        "description": "Create a Stripe Checkout session for a credit top-up.\n\nReturns a Stripe Checkout `url` for the client to redirect to. The\ntop-up is credited to the tenant's balance asynchronously after Stripe\nconfirms payment (typically within seconds of card authorisation).\n\n**Required body fields:**\n- `amount_pence` (int) \u2014 top-up amount in pence. Range: 500 (\u00a35.00) to\n  1,000,000 (\u00a310,000.00).\n- `client_idempotency_key` (str, 8\u2013128 chars) \u2014 caller-supplied\n  idempotency key. Reusing the same key returns the SAME Checkout\n  Session URL \u2014 prevents double-charges from double-clicked Pay buttons.\n\n**Optional body fields:**\n- `currency` \u2014 defaults to `\"gbp\"` (only currency supported in v1).\n- `success_url` / `cancel_url` \u2014 Stripe redirect URLs. Default to the\n  GPUBox dashboard.\n\n**Response:**\n- `id` \u2014 Stripe Checkout Session ID.\n- `url` \u2014 Stripe Checkout URL to redirect the user to.\n- `amount_pence`, `currency`, `expires_at` \u2014 session metadata.\n- `idempotent_replay` (bool, optional) \u2014 `true` if this call returned an\n  existing pending session for the same idempotency key.\n\nReceipt emails are sent to the tenant's billing email after payment clears.",
+        "description": "Create a Stripe Checkout session for a credit top-up.\n\nReturns a Stripe Checkout `url` for the client to redirect to. The\ntop-up is credited to the tenant's balance asynchronously after Stripe\nconfirms payment (typically within seconds of card authorisation).\n\n**Required body fields:**\n- `amount_pence` (int) — top-up amount in pence. Range: 500 (£5.00) to\n  1,000,000 (£10,000.00).\n- `client_idempotency_key` (str, 8–128 chars) — caller-supplied\n  idempotency key. Reusing the same key returns the SAME Checkout\n  Session URL — prevents double-charges from double-clicked Pay buttons.\n\n**Optional body fields:**\n- `currency` — defaults to `\"gbp\"` (only currency supported in v1).\n- `success_url` / `cancel_url` — Stripe redirect URLs. Default to the\n  GPUBox dashboard.\n\n**Response:**\n- `id` — Stripe Checkout Session ID.\n- `url` — Stripe Checkout URL to redirect the user to.\n- `amount_pence`, `currency`, `expires_at` — session metadata.\n- `idempotent_replay` (bool, optional) — `true` if this call returned an\n  existing pending session for the same idempotency key.\n\nReceipt emails are sent to the tenant's billing email after payment clears.",
         "operationId": "create_checkout_session_v1_billing_checkout_sessions_post",
         "parameters": [
           {
@@ -9209,7 +9209,7 @@
     },
     "/v1/billing/paystack/initialize": {
       "post": {
-        "description": "Start an NGN credit top-up via Paystack.\n\nReturns a Paystack `authorization_url` for the client to redirect to.\nCredit is added to the tenant's balance asynchronously after Paystack\nconfirms payment via webhook (typically seconds after card auth).\n\n**Required body fields:**\n- `amount_kobo` (int) \u2014 top-up amount in NGN kobo. Range: 100,000 (\u20a61,000)\n  to 500,000,000 (\u20a65,000,000). Higher caps require BVN/KYC capture\n  (deferred).\n- `client_idempotency_key` (str, 8\u2013128 chars) \u2014 caller-supplied\n  idempotency key. Reusing the same key returns the SAME\n  authorization_url \u2014 prevents double-charges from double-clicked Pay\n  buttons.\n\n**Optional body fields:**\n- `currency` \u2014 defaults to `\"ngn\"` (only currency Paystack accepts).\n- `callback_url` \u2014 override the default redirect-after-payment URL.\n\n**Response:**\n- `authorization_url` \u2014 Paystack hosted-checkout URL to redirect to.\n- `reference` \u2014 Paystack transaction reference (also our provider_reference).\n- `amount_kobo` \u2014 what you'll be charged in NGN minor units.\n- `credited_amount_pence` \u2014 GBP credit you'll receive (computed at the\n   FX rate published right now; locked in once you submit).\n- `currency` \u2014 `\"ngn\"`.\n- `idempotent_replay` (bool, optional) \u2014 `true` if this returned an\n  existing pending session for the same idempotency key.",
+        "description": "Start an NGN credit top-up via Paystack.\n\nReturns a Paystack `authorization_url` for the client to redirect to.\nCredit is added to the tenant's balance asynchronously after Paystack\nconfirms payment via webhook (typically seconds after card auth).\n\n**Required body fields:**\n- `amount_kobo` (int) — top-up amount in NGN kobo. Range: 100,000 (₦1,000)\n  to 500,000,000 (₦5,000,000). Higher caps require BVN/KYC capture\n  (deferred).\n- `client_idempotency_key` (str, 8–128 chars) — caller-supplied\n  idempotency key. Reusing the same key returns the SAME\n  authorization_url — prevents double-charges from double-clicked Pay\n  buttons.\n\n**Optional body fields:**\n- `currency` — defaults to `\"ngn\"` (only currency Paystack accepts).\n- `callback_url` — override the default redirect-after-payment URL.\n\n**Response:**\n- `authorization_url` — Paystack hosted-checkout URL to redirect to.\n- `reference` — Paystack transaction reference (also our provider_reference).\n- `amount_kobo` — what you'll be charged in NGN minor units.\n- `credited_amount_pence` — GBP credit you'll receive (computed at the\n   FX rate published right now; locked in once you submit).\n- `currency` — `\"ngn\"`.\n- `idempotent_replay` (bool, optional) — `true` if this returned an\n  existing pending session for the same idempotency key.",
         "operationId": "paystack_initialize_v1_billing_paystack_initialize_post",
         "parameters": [
           {
@@ -9267,7 +9267,7 @@
     },
     "/v1/chat/billing/start-subscription": {
       "post": {
-        "description": "Kick off a subscription via the country-appropriate payment rail.\n\n**Request body:**\n- `country` (str, 2 chars) \u2014 market code, \"UK\" or \"NG\". The chat\n  frontend derives this from the URL host. The gateway treats it\n  as a routing key only; **no IP geo lookup is performed**.\n- `plan` (str) \u2014 currently \"unlimited\" only.\n\n**Response (provider-specific shape, normalized to a common envelope):**\n```json\n{\n  \"checkout_url\": \"<provider-hosted-checkout URL>\",\n  \"currency\": \"gbp\" | \"ngn\",\n  \"amount\": 2000,\n  \"provider\": \"stripe\" | \"paystack\",\n  \"plan_id\": \"unlimited\",\n  \"country\": \"UK\" | \"NG\"\n}\n```\n\n**Errors:**\n- 400 `invalid_country` \u2014 country not in the supported set.\n- 400 `invalid_plan` \u2014 plan not in the supported set.\n- 401 \u2014 no session cookie and no valid bearer.\n- 503 `billing_unavailable` \u2014 provider not configured on this server.\n\nThe resulting subscription is bound to the authenticated session's\ntenant via `auth.tenant_id` (the Stripe `client_reference_id` /\nPaystack `metadata.gpubox_tenant_id`). The `country` field is NEVER\nused to bind tenancy \u2014 it is purely the routing key.",
+        "description": "Kick off a subscription via the country-appropriate payment rail.\n\n**Request body:**\n- `country` (str, 2 chars) — market code, \"UK\" or \"NG\". The chat\n  frontend derives this from the URL host. The gateway treats it\n  as a routing key only; **no IP geo lookup is performed**.\n- `plan` (str) — currently \"unlimited\" only.\n\n**Response (provider-specific shape, normalized to a common envelope):**\n```json\n{\n  \"checkout_url\": \"<provider-hosted-checkout URL>\",\n  \"currency\": \"gbp\" | \"ngn\",\n  \"amount\": 2000,\n  \"provider\": \"stripe\" | \"paystack\",\n  \"plan_id\": \"unlimited\",\n  \"country\": \"UK\" | \"NG\"\n}\n```\n\n**Errors:**\n- 400 `invalid_country` — country not in the supported set.\n- 400 `invalid_plan` — plan not in the supported set.\n- 401 — no session cookie and no valid bearer.\n- 503 `billing_unavailable` — provider not configured on this server.\n\nThe resulting subscription is bound to the authenticated session's\ntenant via `auth.tenant_id` (the Stripe `client_reference_id` /\nPaystack `metadata.gpubox_tenant_id`). The `country` field is NEVER\nused to bind tenancy — it is purely the routing key.",
         "operationId": "start_subscription_v1_chat_billing_start_subscription_post",
         "parameters": [
           {
@@ -9325,7 +9325,7 @@
     },
     "/v1/chat/completions": {
       "post": {
-        "description": "OpenAI-compatible chat completions.\n\nDrop-in replacement for `POST https://api.openai.com/v1/chat/completions`.\nEvery parameter and response field matches the OpenAI Chat Completions\nschema \u2014 your existing OpenAI SDK code works against `https://api.gpubox.ai/v1`\nwith one base-URL change.\n\n**Models live:**\n- `qwen2.5-32b-instruct` \u2014 Qwen2.5-32B-Instruct (AWQ-int4), 8k context.\n- `llama-3.3-70b-instruct` \u2014 Llama 3.3 70B Instruct, 128k context.\n  Same per-token rate as Qwen for V1 (pricing is endpoint-keyed in\n  W1; per-model pricing lands in W5a.0).\n- `qwen2.5-vl-7b-instruct` \u2014 Qwen2.5-VL-7B-Instruct (AWQ), vision /\n  multimodal, 8k context. Send images as `image_url` content parts\n  (a base64 `data:` URI or an https URL) inside a user message.\n\n**Supported features:**\n- Streaming via Server-Sent Events (`stream: true`). The final chunk\n  includes a `usage` object with token counts.\n- Tool / function calling (`tools`, `tool_choice`, `parallel_tool_calls`).\n- JSON mode (`response_format: {\"type\": \"json_object\"}`).\n- Multimodal input: select `qwen2.5-vl-7b-instruct` and set a message's\n  `content` to a list of parts, e.g.\n  `[{\"type\":\"text\",\"text\":\"what's in this?\"},`\n  `{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/png;base64,...\"}}]`.\n  A plain string `content` (text-only) is also accepted on every model.\n\n**Billing:** \u00a31.00 per 1,000,000 tokens, blended (input + output charged\nat the same rate). Token counts are returned in the response `usage` field.\n\n**Limits:** `max_tokens` 1\u201332768, `n` 1\u20138. A single request cannot exceed\n\u00a310.00 worst-case spend (returns 400 `request_too_large`).",
+        "description": "OpenAI-compatible chat completions.\n\nDrop-in replacement for `POST https://api.openai.com/v1/chat/completions`.\nEvery parameter and response field matches the OpenAI Chat Completions\nschema — your existing OpenAI SDK code works against `https://api.gpubox.ai/v1`\nwith one base-URL change.\n\n**Models live:**\n- `qwen2.5-32b-instruct` — Qwen2.5-32B-Instruct (AWQ-int4), 8k context.\n- `llama-3.3-70b-instruct` — Llama 3.3 70B Instruct, 128k context.\n  Same per-token rate as Qwen for V1 (pricing is endpoint-keyed in\n  W1; per-model pricing lands in W5a.0).\n- `qwen2.5-vl-7b-instruct` — Qwen2.5-VL-7B-Instruct (AWQ), vision /\n  multimodal, 8k context. Send images as `image_url` content parts\n  (a base64 `data:` URI or an https URL) inside a user message.\n\n**Supported features:**\n- Streaming via Server-Sent Events (`stream: true`). The final chunk\n  includes a `usage` object with token counts.\n- Tool / function calling (`tools`, `tool_choice`, `parallel_tool_calls`).\n- JSON mode (`response_format: {\"type\": \"json_object\"}`).\n- Multimodal input: select `qwen2.5-vl-7b-instruct` and set a message's\n  `content` to a list of parts, e.g.\n  `[{\"type\":\"text\",\"text\":\"what's in this?\"},`\n  `{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/png;base64,...\"}}]`.\n  A plain string `content` (text-only) is also accepted on every model.\n\n**Billing:** £1.00 per 1,000,000 tokens, blended (input + output charged\nat the same rate). Token counts are returned in the response `usage` field.\n\n**Limits:** `max_tokens` 1–32768, `n` 1–8. A single request cannot exceed\n£10.00 worst-case spend (returns 400 `request_too_large`).",
         "operationId": "chat_completions_v1_chat_completions_post",
         "parameters": [
           {
@@ -9575,7 +9575,7 @@
         ]
       },
       "post": {
-        "description": "Create or fetch a conversation by customer-supplied key.\n\nIdempotent on (tenant_id, conversation_key). The first call creates;\nsubsequent calls with the same key return the existing conversation\n(no-op for `name` / `model` / `metadata` mismatches \u2014 explicit PATCH\nendpoint lands in Wave 7.4).\n\n`expires_at` is snapshotted from `tenant.vault_retention_days` at create\ntime and frozen after the first message lands. Plan changes do NOT\nretroactively rewrite history.",
+        "description": "Create or fetch a conversation by customer-supplied key.\n\nIdempotent on (tenant_id, conversation_key). The first call creates;\nsubsequent calls with the same key return the existing conversation\n(no-op for `name` / `model` / `metadata` mismatches — explicit PATCH\nendpoint lands in Wave 7.4).\n\n`expires_at` is snapshotted from `tenant.vault_retention_days` at create\ntime and frozen after the first message lands. Plan changes do NOT\nretroactively rewrite history.",
         "operationId": "create_conversation_v1_conversations_post",
         "parameters": [
           {
@@ -9669,7 +9669,7 @@
     },
     "/v1/conversations/search": {
       "post": {
-        "description": "Keyword search across this tenant's conversation messages.\n\n`mode='fts'` (default) \u2014 ranked Postgres tsvector search using the\n`simple` config (no stemming; safe for code, identifiers, and\nnon-English text).\n\n`mode='substring'` \u2014 exact-substring match via pg_trgm. Use this for\n\"find conversation that mentioned 'order_47K' literally\". Slower than\nfts and not ranked, but precise.",
+        "description": "Keyword search across this tenant's conversation messages.\n\n`mode='fts'` (default) — ranked Postgres tsvector search using the\n`simple` config (no stemming; safe for code, identifiers, and\nnon-English text).\n\n`mode='substring'` — exact-substring match via pg_trgm. Use this for\n\"find conversation that mentioned 'order_47K' literally\". Slower than\nfts and not ranked, but precise.",
         "operationId": "search_conversations_v1_conversations_search_post",
         "parameters": [
           {
@@ -10615,7 +10615,7 @@
     },
     "/v1/documents/extract": {
       "post": {
-        "description": "Parse-as-a-service: ingest a document of ANY supported format into a\nchattable RAG corpus.\n\nOne call: file bytes -> sovereign text extraction (markitdown: PDF, DOCX,\nPPTX, XLSX, text, CSV, JSON; scanned-PDF/image OCR when the operator has\nconfigured the sovereign VLM) -> sentence-aware chunks -> embedded into a\ncorpus. The corpus is then chattable via the `X-GPUBox-RAG` header on\n/v1/chat/completions or retrievable via POST /v1/rag/retrieve.\n\nModes:\n  * CREATE (default): omit `corpus_id`, pass `corpus_name` \u2014 a new corpus is\n    created from this document.\n  * APPEND: pass an existing `corpus_id` \u2014 the document's chunks are appended\n    (e.g. add several CVs to one job corpus).\n\nMulti-tenant organisation (for integrators serving their own customers): a\ncorpus is the per-customer / per-job / per-candidate container. Create one\ncorpus per unit of isolation and tag it via `metadata` (e.g.\n{\"customer_id\": \"...\", \"job_id\": \"...\"}). All corpora are tenant-scoped by\nRLS; the integrator maps its customer -> corpus_id and enforces that mapping\nin its own app layer.\n\nExtraction failures surface as HTTP errors, never a 201 with empty content:\n  * 415 \u2014 file type/size the extractor cannot handle ('unsupported').\n  * 422 \u2014 extraction attempted but failed: corrupt/mismatched container,\n    too many chunks, or OCR error ('errored').",
+        "description": "Parse-as-a-service: ingest a document of ANY supported format into a\nchattable RAG corpus.\n\nOne call: file bytes -> sovereign text extraction (markitdown: PDF, DOCX,\nPPTX, XLSX, text, CSV, JSON; scanned-PDF/image OCR when the operator has\nconfigured the sovereign VLM) -> sentence-aware chunks -> embedded into a\ncorpus. The corpus is then chattable via the `X-GPUBox-RAG` header on\n/v1/chat/completions or retrievable via POST /v1/rag/retrieve.\n\nModes:\n  * CREATE (default): omit `corpus_id`, pass `corpus_name` — a new corpus is\n    created from this document.\n  * APPEND: pass an existing `corpus_id` — the document's chunks are appended\n    (e.g. add several CVs to one job corpus).\n\nMulti-tenant organisation (for integrators serving their own customers): a\ncorpus is the per-customer / per-job / per-candidate container. Create one\ncorpus per unit of isolation and tag it via `metadata` (e.g.\n{\"customer_id\": \"...\", \"job_id\": \"...\"}). All corpora are tenant-scoped by\nRLS; the integrator maps its customer -> corpus_id and enforces that mapping\nin its own app layer.\n\nExtraction failures surface as HTTP errors, never a 201 with empty content:\n  * 415 — file type/size the extractor cannot handle ('unsupported').\n  * 422 — extraction attempted but failed: corrupt/mismatched container,\n    too many chunks, or OCR error ('errored').",
         "operationId": "extract_document_v1_documents_extract_post",
         "parameters": [
           {
@@ -10691,7 +10691,7 @@
     },
     "/v1/embeddings": {
       "post": {
-        "description": "OpenAI-compatible embeddings.\n\nDrop-in replacement for `POST https://api.openai.com/v1/embeddings`.\n\n**Models live:**\n- `bge-m3` \u2014 BAAI BGE-M3, multilingual, 1024-dim dense vectors,\n  8k context. Returns L2-normalised embeddings.\n\n**Request:** `input` is a string or list of strings. Pre-tokenised\ninteger lists are not supported.\n\n**Billing:** \u00a30.05 per 1,000,000 tokens. Token counts use the model's\nown tokenizer (XLM-RoBERTa for BGE-M3) and are returned in `usage`.\n\n**Limits:**\n- Max 256 inputs per request.\n- Max 8k tokens per input (model context window).",
+        "description": "OpenAI-compatible embeddings.\n\nDrop-in replacement for `POST https://api.openai.com/v1/embeddings`.\n\n**Models live:**\n- `bge-m3` — BAAI BGE-M3, multilingual, 1024-dim dense vectors,\n  8k context. Returns L2-normalised embeddings.\n\n**Request:** `input` is a string or list of strings. Pre-tokenised\ninteger lists are not supported.\n\n**Billing:** £0.05 per 1,000,000 tokens. Token counts use the model's\nown tokenizer (XLM-RoBERTa for BGE-M3) and are returned in `usage`.\n\n**Limits:**\n- Max 256 inputs per request.\n- Max 8k tokens per input (model context window).",
         "operationId": "embeddings_v1_embeddings_post",
         "parameters": [
           {
@@ -10909,7 +10909,7 @@
         ]
       },
       "put": {
-        "description": "Pin `hosted_model_name` as the active fine-tune for the active workspace.\n\nValidates the name resolves to a non-deleted hosted model reachable IN the\nactive workspace (same JOIN the serving path uses) before persisting \u2014 so a\nworkspace can never pin a fine-tune from another workspace/tenant. 404 if\nthe name doesn't resolve in this workspace (never leaks existence).",
+        "description": "Pin `hosted_model_name` as the active fine-tune for the active workspace.\n\nValidates the name resolves to a non-deleted hosted model reachable IN the\nactive workspace (same JOIN the serving path uses) before persisting — so a\nworkspace can never pin a fine-tune from another workspace/tenant. 404 if\nthe name doesn't resolve in this workspace (never leaks existence).",
         "operationId": "set_active_finetune_v1_finetune_active_put",
         "parameters": [
           {
@@ -11261,7 +11261,7 @@
     },
     "/v1/grants/mint": {
       "post": {
-        "description": "Mint a `gpbs_*` opaque grant bound to the request's session + origin.\n\nAuth: any bearer that resolves through `require_auth` (W2.0 session\ncookie path included via the session-cookie resolver added in W2.0).\nReturns the bearer string ONCE \u2014 never logged, never stored in plain.",
+        "description": "Mint a `gpbs_*` opaque grant bound to the request's session + origin.\n\nAuth: any bearer that resolves through `require_auth` (W2.0 session\ncookie path included via the session-cookie resolver added in W2.0).\nReturns the bearer string ONCE — never logged, never stored in plain.",
         "operationId": "mint_grant_v1_grants_mint_post",
         "parameters": [
           {
@@ -11321,7 +11321,7 @@
     },
     "/v1/hosting/models": {
       "get": {
-        "description": "List hosted models IN the active workspace, optionally filtered by tier.\n\nV1.5 W3 (rdx F1): workspace-scoped, NOT tenant-global. A hosted model\nbelongs to the workspace its underlying training run lives in; the JOIN to\ngpubox_training_runs (FORCE RLS + RESTRICTIVE workspace policy, under both\nGUCs) fences the list so workspace B never sees workspace A's fine-tunes \u2014\nthe same fence the serving + pin paths use. Management isolation must match\nserving isolation (founder: workspace isolation is a HARD boundary).",
+        "description": "List hosted models IN the active workspace, optionally filtered by tier.\n\nV1.5 W3 (rdx F1): workspace-scoped, NOT tenant-global. A hosted model\nbelongs to the workspace its underlying training run lives in; the JOIN to\ngpubox_training_runs (FORCE RLS + RESTRICTIVE workspace policy, under both\nGUCs) fences the list so workspace B never sees workspace A's fine-tunes —\nthe same fence the serving + pin paths use. Management isolation must match\nserving isolation (founder: workspace isolation is a HARD boundary).",
         "operationId": "list_hosted_models_v1_hosting_models_get",
         "parameters": [
           {
@@ -11419,7 +11419,7 @@
         ]
       },
       "post": {
-        "description": "Promote a 'succeeded' + 'replicated' training run to a hosted model.\n\nSteps:\n  1. Validate the training run exists, is owned by this tenant, has\n     status='succeeded' AND durability='replicated' (Kimi rule \u2014\n     not-yet-replicated artifacts cannot be promoted).\n  2. Enforce the per-tenant tier cap (max_*_models columns).\n  3. INSERT the row at status='provisioning'.\n  4. If always_hot or warm: ask vLLM to load the adapter now. On 200,\n     flip status='ready'. On failure, flip 'error' and surface a 503.\n  5. If cold: skip the vLLM call, flip 'ready' immediately (loaded\n     on demand from /v1/chat/completions).",
+        "description": "Promote a 'succeeded' + 'replicated' training run to a hosted model.\n\nSteps:\n  1. Validate the training run exists, is owned by this tenant, has\n     status='succeeded' AND durability='replicated' (Kimi rule —\n     not-yet-replicated artifacts cannot be promoted).\n  2. Enforce the per-tenant tier cap (max_*_models columns).\n  3. INSERT the row at status='provisioning'.\n  4. If always_hot or warm: ask vLLM to load the adapter now. On 200,\n     flip status='ready'. On failure, flip 'error' and surface a 503.\n  5. If cold: skip the vLLM call, flip 'ready' immediately (loaded\n     on demand from /v1/chat/completions).",
         "operationId": "create_hosted_model_v1_hosting_models_post",
         "parameters": [
           {
@@ -11502,7 +11502,7 @@
                 }
               }
             },
-            "description": "Bad request \u2014 malformed input or a failed validation (returned as the standard error envelope)."
+            "description": "Bad request — malformed input or a failed validation (returned as the standard error envelope)."
           },
           "401": {
             "content": {
@@ -11512,7 +11512,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -11522,7 +11522,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "404": {
             "content": {
@@ -11532,7 +11532,7 @@
                 }
               }
             },
-            "description": "Not found \u2014 the resource does not exist or is not visible to this tenant."
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
           },
           "409": {
             "content": {
@@ -11542,7 +11542,7 @@
                 }
               }
             },
-            "description": "Conflict \u2014 the request conflicts with the current state of the resource."
+            "description": "Conflict — the request conflicts with the current state of the resource."
           },
           "422": {
             "content": {
@@ -11562,7 +11562,7 @@
                 }
               }
             },
-            "description": "Too many requests \u2014 a rate or concurrency limit was hit; retry after backoff."
+            "description": "Too many requests — a rate or concurrency limit was hit; retry after backoff."
           },
           "503": {
             "content": {
@@ -11572,7 +11572,7 @@
                 }
               }
             },
-            "description": "Service unavailable \u2014 the capability is not currently available on this server."
+            "description": "Service unavailable — the capability is not currently available on this server."
           }
         },
         "summary": "Create Hosted Model",
@@ -11583,7 +11583,7 @@
     },
     "/v1/hosting/models/{model_id}": {
       "delete": {
-        "description": "Un-host a model IN the active workspace.\n\nFor warm / always_hot: unloads from vLLM first, then DELETEs the row.\nThe trained-model artifact in storage is NOT deleted \u2014 the customer\ncan promote a new hosted_model from the same training_run later.\n\nV1.5 W3 (rdx F1): the initial lookup is workspace-fenced via the\ngpubox_training_runs JOIN under both GUCs, so a workspace can only delete\nITS OWN fine-tunes \u2014 a cross-workspace model id 404s (no within-tenant\ncross-workspace destruction). The subsequent UPDATE is keyed on the row id\nalready validated as in-workspace by the fenced SELECT.",
+        "description": "Un-host a model IN the active workspace.\n\nFor warm / always_hot: unloads from vLLM first, then DELETEs the row.\nThe trained-model artifact in storage is NOT deleted — the customer\ncan promote a new hosted_model from the same training_run later.\n\nV1.5 W3 (rdx F1): the initial lookup is workspace-fenced via the\ngpubox_training_runs JOIN under both GUCs, so a workspace can only delete\nITS OWN fine-tunes — a cross-workspace model id 404s (no within-tenant\ncross-workspace destruction). The subsequent UPDATE is keyed on the row id\nalready validated as in-workspace by the fenced SELECT.",
         "operationId": "delete_hosted_model_v1_hosting_models__model_id__delete",
         "parameters": [
           {
@@ -11675,7 +11675,7 @@
         ]
       },
       "get": {
-        "description": "Fetch a hosted model IN the active workspace.\n\nV1.5 W3 (rdx F1): workspace-scoped via the gpubox_training_runs JOIN under\nboth GUCs \u2014 a model whose training run lives in another workspace 404s\n(never leaks metadata across workspaces, same fence as serving/pin).",
+        "description": "Fetch a hosted model IN the active workspace.\n\nV1.5 W3 (rdx F1): workspace-scoped via the gpubox_training_runs JOIN under\nboth GUCs — a model whose training run lives in another workspace 404s\n(never leaks metadata across workspaces, same fence as serving/pin).",
         "operationId": "get_hosted_model_v1_hosting_models__model_id__get",
         "parameters": [
           {
@@ -11768,7 +11768,7 @@
     },
     "/v1/hosting/models/{model_id}/transition": {
       "post": {
-        "description": "Move a hosted model between tiers (cold \u2194 warm \u2194 always_hot).\n\nTransitions:\n  cold \u2192 warm        : load into vLLM, idle_evict=30min.\n  cold \u2192 always_hot  : load into vLLM, idle_evict=NULL.\n  warm \u2192 always_hot  : flip idle_evict to NULL (no vLLM call needed if already loaded).\n  warm \u2192 cold        : unload from vLLM if loaded, idle_evict=0.\n  always_hot \u2192 warm  : flip idle_evict to 30min (stays loaded).\n  always_hot \u2192 cold  : unload from vLLM, idle_evict=0.",
+        "description": "Move a hosted model between tiers (cold ↔ warm ↔ always_hot).\n\nTransitions:\n  cold → warm        : load into vLLM, idle_evict=30min.\n  cold → always_hot  : load into vLLM, idle_evict=NULL.\n  warm → always_hot  : flip idle_evict to NULL (no vLLM call needed if already loaded).\n  warm → cold        : unload from vLLM if loaded, idle_evict=0.\n  always_hot → warm  : flip idle_evict to 30min (stays loaded).\n  always_hot → cold  : unload from vLLM, idle_evict=0.",
         "operationId": "transition_hosted_model_v1_hosting_models__model_id__transition_post",
         "parameters": [
           {
@@ -11860,7 +11860,7 @@
                 }
               }
             },
-            "description": "Bad request \u2014 malformed input or a failed validation (returned as the standard error envelope)."
+            "description": "Bad request — malformed input or a failed validation (returned as the standard error envelope)."
           },
           "401": {
             "content": {
@@ -11870,7 +11870,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -11880,7 +11880,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "404": {
             "content": {
@@ -11890,7 +11890,7 @@
                 }
               }
             },
-            "description": "Not found \u2014 the resource does not exist or is not visible to this tenant."
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
           },
           "422": {
             "content": {
@@ -11910,7 +11910,7 @@
                 }
               }
             },
-            "description": "Too many requests \u2014 a rate or concurrency limit was hit; retry after backoff."
+            "description": "Too many requests — a rate or concurrency limit was hit; retry after backoff."
           },
           "503": {
             "content": {
@@ -11920,7 +11920,7 @@
                 }
               }
             },
-            "description": "Service unavailable \u2014 the capability is not currently available on this server."
+            "description": "Service unavailable — the capability is not currently available on this server."
           }
         },
         "summary": "Transition Hosted Model",
@@ -12102,7 +12102,7 @@
                 }
               }
             },
-            "description": "Bad request \u2014 malformed input or a failed validation (returned as the standard error envelope)."
+            "description": "Bad request — malformed input or a failed validation (returned as the standard error envelope)."
           },
           "401": {
             "content": {
@@ -12112,7 +12112,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -12122,7 +12122,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           }
         },
         "summary": "List Adapters",
@@ -12196,7 +12196,7 @@
                 }
               }
             },
-            "description": "Bad request \u2014 malformed input or a failed validation (returned as the standard error envelope)."
+            "description": "Bad request — malformed input or a failed validation (returned as the standard error envelope)."
           },
           "401": {
             "content": {
@@ -12206,7 +12206,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -12216,7 +12216,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "404": {
             "content": {
@@ -12226,7 +12226,7 @@
                 }
               }
             },
-            "description": "Not found \u2014 the resource does not exist or is not visible to this tenant."
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
           },
           "409": {
             "content": {
@@ -12236,7 +12236,7 @@
                 }
               }
             },
-            "description": "Conflict \u2014 the request conflicts with the current state of the resource."
+            "description": "Conflict — the request conflicts with the current state of the resource."
           },
           "503": {
             "content": {
@@ -12246,7 +12246,7 @@
                 }
               }
             },
-            "description": "Service unavailable \u2014 the capability is not currently available on this server."
+            "description": "Service unavailable — the capability is not currently available on this server."
           }
         },
         "summary": "Register Adapter Endpoint",
@@ -12257,7 +12257,7 @@
     },
     "/v1/lora/adapters/{adapter_id}": {
       "delete": {
-        "description": "Customer-initiated deletion: flip to 'shredded'.\n\nThe DB row stays \u2014 only the artifact bytes are physically deleted\nlater by the PR-0E tenant_lifecycle_worker (which scans for\nshredded rows on its sweep). This separation lets the routing\nlayer stop serving the version IMMEDIATELY while the object-store\ndeletion runs asynchronously (a remote PUT to delete-marker that\ncan take seconds at scale).\n\nTenant-scoped, not admin-only \u2014 every tenant can manage their own\ninventory.\n\nReturns 409 if the adapter is currently routable (status in\n{canary, promoted}); customer must abort the canary or promote a\nreplacement first so in-flight traffic isn't silently broken.",
+        "description": "Customer-initiated deletion: flip to 'shredded'.\n\nThe DB row stays — only the artifact bytes are physically deleted\nlater by the PR-0E tenant_lifecycle_worker (which scans for\nshredded rows on its sweep). This separation lets the routing\nlayer stop serving the version IMMEDIATELY while the object-store\ndeletion runs asynchronously (a remote PUT to delete-marker that\ncan take seconds at scale).\n\nTenant-scoped, not admin-only — every tenant can manage their own\ninventory.\n\nReturns 409 if the adapter is currently routable (status in\n{canary, promoted}); customer must abort the canary or promote a\nreplacement first so in-flight traffic isn't silently broken.",
         "operationId": "shred_adapter_endpoint_v1_lora_adapters__adapter_id__delete",
         "parameters": [
           {
@@ -12341,7 +12341,7 @@
                 }
               }
             },
-            "description": "Bad request \u2014 malformed input or a failed validation (returned as the standard error envelope)."
+            "description": "Bad request — malformed input or a failed validation (returned as the standard error envelope)."
           },
           "401": {
             "content": {
@@ -12351,7 +12351,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -12361,7 +12361,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "404": {
             "content": {
@@ -12371,7 +12371,7 @@
                 }
               }
             },
-            "description": "Not found \u2014 the resource does not exist or is not visible to this tenant."
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
           },
           "409": {
             "content": {
@@ -12381,7 +12381,7 @@
                 }
               }
             },
-            "description": "Conflict \u2014 the request conflicts with the current state of the resource."
+            "description": "Conflict — the request conflicts with the current state of the resource."
           },
           "503": {
             "content": {
@@ -12391,7 +12391,7 @@
                 }
               }
             },
-            "description": "Service unavailable \u2014 the capability is not currently available on this server."
+            "description": "Service unavailable — the capability is not currently available on this server."
           }
         },
         "summary": "Shred Adapter Endpoint",
@@ -12402,7 +12402,7 @@
     },
     "/v1/lora/adapters/{adapter_id}/abort": {
       "post": {
-        "description": "Abort the canary \u2014 marks it 'deprecated', traffic returns to the\nlast-promoted version via the routing-layer fallback.\n\nAdmin-only. The adapter row keeps its artifact (not shredded) so\nforensics can replay the canary's outputs later if the abort was\ndue to a regression we want to study.",
+        "description": "Abort the canary — marks it 'deprecated', traffic returns to the\nlast-promoted version via the routing-layer fallback.\n\nAdmin-only. The adapter row keeps its artifact (not shredded) so\nforensics can replay the canary's outputs later if the abort was\ndue to a regression we want to study.",
         "operationId": "abort_canary_endpoint_v1_lora_adapters__adapter_id__abort_post",
         "parameters": [
           {
@@ -12486,7 +12486,7 @@
                 }
               }
             },
-            "description": "Bad request \u2014 malformed input or a failed validation (returned as the standard error envelope)."
+            "description": "Bad request — malformed input or a failed validation (returned as the standard error envelope)."
           },
           "401": {
             "content": {
@@ -12496,7 +12496,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -12506,7 +12506,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "404": {
             "content": {
@@ -12516,7 +12516,7 @@
                 }
               }
             },
-            "description": "Not found \u2014 the resource does not exist or is not visible to this tenant."
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
           },
           "409": {
             "content": {
@@ -12526,7 +12526,7 @@
                 }
               }
             },
-            "description": "Conflict \u2014 the request conflicts with the current state of the resource."
+            "description": "Conflict — the request conflicts with the current state of the resource."
           },
           "503": {
             "content": {
@@ -12536,7 +12536,7 @@
                 }
               }
             },
-            "description": "Service unavailable \u2014 the capability is not currently available on this server."
+            "description": "Service unavailable — the capability is not currently available on this server."
           }
         },
         "summary": "Abort Canary Endpoint",
@@ -12547,7 +12547,7 @@
     },
     "/v1/lora/adapters/{adapter_id}/canary": {
       "post": {
-        "description": "Transition adapter_id to status='canary' with the given traffic %.\n\nAdmin-only: flipping a percentage of production traffic to a new\nversion is a higher-stakes action than registering a row. The\nrepo helper enforces \"current status must be 'registered'\" \u2014 a\nsecond canary attempt on the same (family, name) raises\nUniqueViolation (409) because the partial UNIQUE allows at most\none canary per (family, name).",
+        "description": "Transition adapter_id to status='canary' with the given traffic %.\n\nAdmin-only: flipping a percentage of production traffic to a new\nversion is a higher-stakes action than registering a row. The\nrepo helper enforces \"current status must be 'registered'\" — a\nsecond canary attempt on the same (family, name) raises\nUniqueViolation (409) because the partial UNIQUE allows at most\none canary per (family, name).",
         "operationId": "set_canary_endpoint_v1_lora_adapters__adapter_id__canary_post",
         "parameters": [
           {
@@ -12641,7 +12641,7 @@
                 }
               }
             },
-            "description": "Bad request \u2014 malformed input or a failed validation (returned as the standard error envelope)."
+            "description": "Bad request — malformed input or a failed validation (returned as the standard error envelope)."
           },
           "401": {
             "content": {
@@ -12651,7 +12651,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -12661,7 +12661,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "404": {
             "content": {
@@ -12671,7 +12671,7 @@
                 }
               }
             },
-            "description": "Not found \u2014 the resource does not exist or is not visible to this tenant."
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
           },
           "409": {
             "content": {
@@ -12681,7 +12681,7 @@
                 }
               }
             },
-            "description": "Conflict \u2014 the request conflicts with the current state of the resource."
+            "description": "Conflict — the request conflicts with the current state of the resource."
           },
           "503": {
             "content": {
@@ -12691,7 +12691,7 @@
                 }
               }
             },
-            "description": "Service unavailable \u2014 the capability is not currently available on this server."
+            "description": "Service unavailable — the capability is not currently available on this server."
           }
         },
         "summary": "Set Canary Endpoint",
@@ -12786,7 +12786,7 @@
                 }
               }
             },
-            "description": "Bad request \u2014 malformed input or a failed validation (returned as the standard error envelope)."
+            "description": "Bad request — malformed input or a failed validation (returned as the standard error envelope)."
           },
           "401": {
             "content": {
@@ -12796,7 +12796,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -12806,7 +12806,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "404": {
             "content": {
@@ -12816,7 +12816,7 @@
                 }
               }
             },
-            "description": "Not found \u2014 the resource does not exist or is not visible to this tenant."
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
           },
           "409": {
             "content": {
@@ -12826,7 +12826,7 @@
                 }
               }
             },
-            "description": "Conflict \u2014 the request conflicts with the current state of the resource."
+            "description": "Conflict — the request conflicts with the current state of the resource."
           },
           "503": {
             "content": {
@@ -12836,7 +12836,7 @@
                 }
               }
             },
-            "description": "Service unavailable \u2014 the capability is not currently available on this server."
+            "description": "Service unavailable — the capability is not currently available on this server."
           }
         },
         "summary": "Promote Canary Endpoint",
@@ -12847,7 +12847,7 @@
     },
     "/v1/models": {
       "get": {
-        "description": "List available models. OpenAI-compatible response shape.\n\nOnly models currently serving requests are returned. Models marked\n\"coming soon\" on https://gpubox.ai/models/ are NOT in this list yet\n(they'd 503) \u2014 they appear here when their endpoint is live.\n\nChat.1 \u2014 Llama 3.3 70B is advertised iff an enabled `llama`-role\nupstream is configured (either explicit in GPUBOX_VLLM_UPSTREAMS or\nsynthesised via GPUBOX_VLLM_LLAMA_URL). V1.1 \u2014 QwQ-32B follows the\nsame rule via the `qwq`-role pool. W3 \u2014 Qwen2.5-VL-7B (vision /\nimage-understanding) follows it too via the `vision`-role pool\n(GPUBOX_VLLM_VISION_URL); send images as `image_url` content parts.\nPer Codex review MEDIUM #3:\nthe docstring promise above (\"only models currently serving\") is\nload-bearing for SDK introspection; advertising a model whose\nupstream is unwired would break that contract and confuse callers\nthat filter the `/v1/models` list to pick a model. The chat handler\nstill surfaces 503 + X-GPUBox-Breaker-Role-Unavailable for any\n`model: \"llama-...\"` / `model: \"qwq-...\"` request when the upstream\nisn't there.",
+        "description": "List available models. OpenAI-compatible response shape.\n\nOnly models currently serving requests are returned. Models marked\n\"coming soon\" on https://gpubox.ai/models/ are NOT in this list yet\n(they'd 503) — they appear here when their endpoint is live.\n\nChat.1 — Llama 3.3 70B is advertised iff an enabled `llama`-role\nupstream is configured (either explicit in GPUBOX_VLLM_UPSTREAMS or\nsynthesised via GPUBOX_VLLM_LLAMA_URL). V1.1 — QwQ-32B follows the\nsame rule via the `qwq`-role pool. W3 — Qwen2.5-VL-7B (vision /\nimage-understanding) follows it too via the `vision`-role pool\n(GPUBOX_VLLM_VISION_URL); send images as `image_url` content parts.\nPer Codex review MEDIUM #3:\nthe docstring promise above (\"only models currently serving\") is\nload-bearing for SDK introspection; advertising a model whose\nupstream is unwired would break that contract and confuse callers\nthat filter the `/v1/models` list to pick a model. The chat handler\nstill surfaces 503 + X-GPUBox-Breaker-Role-Unavailable for any\n`model: \"llama-...\"` / `model: \"qwq-...\"` request when the upstream\nisn't there.",
         "operationId": "list_models_v1_models_get",
         "parameters": [
           {
@@ -13385,7 +13385,7 @@
                 }
               }
             },
-            "description": "Bad request \u2014 malformed input or a failed validation (returned as the standard error envelope)."
+            "description": "Bad request — malformed input or a failed validation (returned as the standard error envelope)."
           },
           "401": {
             "content": {
@@ -13395,7 +13395,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -13405,7 +13405,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "404": {
             "content": {
@@ -13415,7 +13415,7 @@
                 }
               }
             },
-            "description": "Not found \u2014 the resource does not exist or is not visible to this tenant."
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
           },
           "422": {
             "content": {
@@ -13435,7 +13435,7 @@
                 }
               }
             },
-            "description": "Service unavailable \u2014 the capability is not currently available on this server."
+            "description": "Service unavailable — the capability is not currently available on this server."
           }
         },
         "summary": "Unified search (find) + grounded synthesis (synthesize)",
@@ -13523,7 +13523,7 @@
         ]
       },
       "post": {
-        "description": "Provision a sub-tenant under the calling platform_umbrella parent.\n\nIdempotent on (parent, lower(name)): a retry with the same child name\nreturns the EXISTING child (200, no api_key \u2014 secrets are shown once) rather\nthan minting a duplicate tenant + key. A fresh create returns 201 and, when\nmint_api_key=true, the child's service key ONCE.",
+        "description": "Provision a sub-tenant under the calling platform_umbrella parent.\n\nIdempotent on (parent, lower(name)): a retry with the same child name\nreturns the EXISTING child (200, no api_key — secrets are shown once) rather\nthan minting a duplicate tenant + key. A fresh create returns 201 and, when\nmint_api_key=true, the child's service key ONCE.",
         "operationId": "provision_subtenant_v1_subtenants_post",
         "parameters": [
           {
@@ -13760,7 +13760,7 @@
     },
     "/v1/subtenants/{child_id}/compliance/evidence": {
       "get": {
-        "description": "Regulator-ready evidence bundle for an owned child. Gated on the PARENT\nholding the Compliance Pack entitlement (402 if not) \u2014 sovereignty/audit as\na premium SKU. Read-only aggregation of existing tamper-evident substrate.",
+        "description": "Regulator-ready evidence bundle for an owned child. Gated on the PARENT\nholding the Compliance Pack entitlement (402 if not) — sovereignty/audit as\na premium SKU. Read-only aggregation of existing tamper-evident substrate.",
         "operationId": "subtenant_compliance_evidence_v1_subtenants__child_id__compliance_evidence_get",
         "parameters": [
           {
@@ -13819,7 +13819,7 @@
     },
     "/v1/subtenants/{child_id}/data-delete": {
       "post": {
-        "description": "Enqueue a DESTRUCTIVE data-delete (purge | crypto-shred) for an owned\nchild. HUMAN-ADMIN ONLY (require_human_admin rejects service keys) \u2014 the\nreseller's automated service key cannot purge a customer; a human admin of\nthe parent platform_umbrella must. The job runs the same tenant_lifecycle\npurge/shred on the child's tenant_id.",
+        "description": "Enqueue a DESTRUCTIVE data-delete (purge | crypto-shred) for an owned\nchild. HUMAN-ADMIN ONLY (require_human_admin rejects service keys) — the\nreseller's automated service key cannot purge a customer; a human admin of\nthe parent platform_umbrella must. The job runs the same tenant_lifecycle\npurge/shred on the child's tenant_id.",
         "operationId": "delete_subtenant_data_v1_subtenants__child_id__data_delete_post",
         "parameters": [
           {
@@ -13902,7 +13902,7 @@
     },
     "/v1/subtenants/{child_id}/data-delete/{job_id}": {
       "get": {
-        "description": "Poll a child delete job. The PARENT (a separate tenant) polls and is\nnever quiesced, so its human-admin bearer stays valid throughout \u2014 no\nsigned-URL fallback needed (unlike self-tenant delete).",
+        "description": "Poll a child delete job. The PARENT (a separate tenant) polls and is\nnever quiesced, so its human-admin bearer stays valid throughout — no\nsigned-URL fallback needed (unlike self-tenant delete).",
         "operationId": "poll_subtenant_delete_v1_subtenants__child_id__data_delete__job_id__get",
         "parameters": [
           {
@@ -14106,7 +14106,7 @@
     },
     "/v1/subtenants/{child_id}/deactivate": {
       "post": {
-        "description": "Soft-suspend a child (is_active=false). Naturally idempotent. The\nmig-0018 trigger stamps suspended_at; the child's own service key then\nfail-closes at the auth resolver (tenant_active=false -> 403). Reversible \u2014\nprefer this over a hard delete for the default reseller offboarding step.",
+        "description": "Soft-suspend a child (is_active=false). Naturally idempotent. The\nmig-0018 trigger stamps suspended_at; the child's own service key then\nfail-closes at the auth resolver (tenant_active=false -> 403). Reversible —\nprefer this over a hard delete for the default reseller offboarding step.",
         "operationId": "deactivate_subtenant_v1_subtenants__child_id__deactivate_post",
         "parameters": [
           {
@@ -14308,7 +14308,7 @@
     },
     "/v1/tenant/data-delete/{job_id}": {
       "get": {
-        "description": "Poll the status of a delete (purge or crypto-shred) job.\n\nAUTH (Codex slice-5 R4 BLOCKER):\n  * EITHER all four signed-URL query params (tenant_id, exp, kid,\n    sig) \u2014 HMAC-verified against the PR-0C tenant-export keyring\n    scope. Used post-quiesce when the bearer would be rejected by\n    the auth resolver (the purge handler flips is_active=false at\n    the top, and every auth path then 403s the tenant). The\n    signed URL is minted at enqueue time + returned in the 202\n    response.\n  * OR a human-admin bearer. Useful before the purge handler has\n    started OR for crypto-shred (the cryptoshred handler does NOT\n    flip is_active=false).\n\nResponse shape matches the export poll, minus\nsigned_download_url (delete jobs have no artifact).",
+        "description": "Poll the status of a delete (purge or crypto-shred) job.\n\nAUTH (Codex slice-5 R4 BLOCKER):\n  * EITHER all four signed-URL query params (tenant_id, exp, kid,\n    sig) — HMAC-verified against the PR-0C tenant-export keyring\n    scope. Used post-quiesce when the bearer would be rejected by\n    the auth resolver (the purge handler flips is_active=false at\n    the top, and every auth path then 403s the tenant). The\n    signed URL is minted at enqueue time + returned in the 202\n    response.\n  * OR a human-admin bearer. Useful before the purge handler has\n    started OR for crypto-shred (the cryptoshred handler does NOT\n    flip is_active=false).\n\nResponse shape matches the export poll, minus\nsigned_download_url (delete jobs have no artifact).",
         "operationId": "poll_data_delete_v1_tenant_data_delete__job_id__get",
         "parameters": [
           {
@@ -14572,7 +14572,7 @@
     },
     "/v1/tenant/data-export/{job_id}/download": {
       "get": {
-        "description": "Stream the export bundle bytes for a completed job.\n\nAUTH: signed-URL ONLY \u2014 NO bearer required. The query-string\ncomponents (tenant_id, exp, kid, sig) are HMAC-verified against\nthe PR-0C keyring scope 'tenant-export'. Tampered / expired /\nwrong-kid URLs return 403.\n\nCross-tenant defence in depth: AFTER the HMAC check passes, the\nendpoint reads the job row and asserts row.tenant_id == query\ntenant_id. A signed URL minted for tenant A cannot stream\ntenant B's bundle even if the signature is somehow valid.\n\nStreams the bytes from the job row's payload._bundle_b64 field.\nV2 will redirect to an Object Storage signed URL instead.",
+        "description": "Stream the export bundle bytes for a completed job.\n\nAUTH: signed-URL ONLY — NO bearer required. The query-string\ncomponents (tenant_id, exp, kid, sig) are HMAC-verified against\nthe PR-0C keyring scope 'tenant-export'. Tampered / expired /\nwrong-kid URLs return 403.\n\nCross-tenant defence in depth: AFTER the HMAC check passes, the\nendpoint reads the job row and asserts row.tenant_id == query\ntenant_id. A signed URL minted for tenant A cannot stream\ntenant B's bundle even if the signature is somehow valid.\n\nStreams the bytes from the job row's payload._bundle_b64 field.\nV2 will redirect to an Object Storage signed URL instead.",
         "operationId": "download_data_export_v1_tenant_data_export__job_id__download_get",
         "parameters": [
           {
@@ -14780,7 +14780,7 @@
         ]
       },
       "post": {
-        "description": "Invite a user to a tenant.\n\nFor SSO-enabled tenants we send a magic-link email (Wave 1 reuse for\nthe INVITATION delivery only \u2014 the OIDC code path remains separate).\nFor non-SSO tenants this endpoint creates the user record + role row\nso a subsequent OIDC login flow finds them in 'invited' status.\n\nThe user starts in `status='invited'`; first successful login flips\nto 'active' (see app/sso/oidc.py:issue_code).",
+        "description": "Invite a user to a tenant.\n\nFor SSO-enabled tenants we send a magic-link email (Wave 1 reuse for\nthe INVITATION delivery only — the OIDC code path remains separate).\nFor non-SSO tenants this endpoint creates the user record + role row\nso a subsequent OIDC login flow finds them in 'invited' status.\n\nThe user starts in `status='invited'`; first successful login flips\nto 'active' (see app/sso/oidc.py:issue_code).",
         "operationId": "invite_user_v1_tenants__tenant_id__users_post",
         "parameters": [
           {
@@ -15028,7 +15028,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -15038,7 +15038,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "503": {
             "content": {
@@ -15048,7 +15048,7 @@
                 }
               }
             },
-            "description": "Service unavailable \u2014 the capability is not currently available on this server."
+            "description": "Service unavailable — the capability is not currently available on this server."
           }
         },
         "summary": "List Training Presets",
@@ -15180,7 +15180,7 @@
                 }
               }
             },
-            "description": "Bad request \u2014 malformed input or a failed validation (returned as the standard error envelope)."
+            "description": "Bad request — malformed input or a failed validation (returned as the standard error envelope)."
           },
           "401": {
             "content": {
@@ -15190,7 +15190,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -15200,7 +15200,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           }
         },
         "summary": "List Training Runs",
@@ -15209,7 +15209,7 @@
         ]
       },
       "post": {
-        "description": "Submit a training run.\n\nReserves `preset.estimated_gpu_seconds` worth of credit upfront from\nthe tenant's balance. Idempotent on (tenant_id, client_idempotency_key)\n\u2014 the same key from the same tenant returns the existing row even\nafter a network retry. The run is enqueued at status='pending'; the\nbackground dispatcher picks it up and transitions to 'leased'.\n\nReturns 202 with the created row. Poll `/v1/training/runs/{id}` for\nstatus, or watch `output_artifact_url` to populate when 'succeeded'.\n\nWebhooks (GPUB-412): emits the `training.run.*` lifecycle events to the\ntenant's active subscriptions as the run progresses \u2014 `training.run.created`\non submit (here), then `running`, then a terminal `succeeded` / `failed` /\n`cancelled`. Delivery is best-effort + signed (`X-GPUBox-Signature`); poll\nthe run for ground truth. Subscribe via `POST /v1/webhooks`.",
+        "description": "Submit a training run.\n\nReserves `preset.estimated_gpu_seconds` worth of credit upfront from\nthe tenant's balance. Idempotent on (tenant_id, client_idempotency_key)\n— the same key from the same tenant returns the existing row even\nafter a network retry. The run is enqueued at status='pending'; the\nbackground dispatcher picks it up and transitions to 'leased'.\n\nReturns 202 with the created row. Poll `/v1/training/runs/{id}` for\nstatus, or watch `output_artifact_url` to populate when 'succeeded'.\n\nWebhooks (GPUB-412): emits the `training.run.*` lifecycle events to the\ntenant's active subscriptions as the run progresses — `training.run.created`\non submit (here), then `running`, then a terminal `succeeded` / `failed` /\n`cancelled`. Delivery is best-effort + signed (`X-GPUBox-Signature`); poll\nthe run for ground truth. Subscribe via `POST /v1/webhooks`.",
         "operationId": "create_training_run_v1_training_runs_post",
         "parameters": [
           {
@@ -15274,7 +15274,7 @@
                 }
               }
             },
-            "description": "Bad request \u2014 malformed input or a failed validation (returned as the standard error envelope)."
+            "description": "Bad request — malformed input or a failed validation (returned as the standard error envelope)."
           },
           "401": {
             "content": {
@@ -15284,7 +15284,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "402": {
             "content": {
@@ -15294,7 +15294,7 @@
                 }
               }
             },
-            "description": "Payment required \u2014 the tenant's balance is insufficient for this request."
+            "description": "Payment required — the tenant's balance is insufficient for this request."
           },
           "403": {
             "content": {
@@ -15304,7 +15304,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "404": {
             "content": {
@@ -15314,7 +15314,7 @@
                 }
               }
             },
-            "description": "Not found \u2014 the resource does not exist or is not visible to this tenant."
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
           },
           "409": {
             "content": {
@@ -15324,7 +15324,7 @@
                 }
               }
             },
-            "description": "Conflict \u2014 the request conflicts with the current state of the resource."
+            "description": "Conflict — the request conflicts with the current state of the resource."
           },
           "429": {
             "content": {
@@ -15334,7 +15334,7 @@
                 }
               }
             },
-            "description": "Too many requests \u2014 a rate or concurrency limit was hit; retry after backoff."
+            "description": "Too many requests — a rate or concurrency limit was hit; retry after backoff."
           },
           "503": {
             "content": {
@@ -15344,7 +15344,7 @@
                 }
               }
             },
-            "description": "Service unavailable \u2014 the capability is not currently available on this server."
+            "description": "Service unavailable — the capability is not currently available on this server."
           }
         },
         "summary": "Create Training Run",
@@ -15437,7 +15437,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -15447,7 +15447,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "404": {
             "content": {
@@ -15457,7 +15457,7 @@
                 }
               }
             },
-            "description": "Not found \u2014 the resource does not exist or is not visible to this tenant."
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
           }
         },
         "summary": "Get Training Run",
@@ -15468,7 +15468,7 @@
     },
     "/v1/training/runs/{run_id}/cancel": {
       "post": {
-        "description": "Cancel a pending or running training run.\n\nPending runs (no worker has leased them yet) are flipped directly to\n'cancelled' and the credit reservation released in full. Running runs\nare signalled \u2014 the worker observes the cancel intent on the next\nheartbeat tick (\u226430s) and SIGTERMs the trainer process. The\ncustomer-visible status will transition cancelled within a minute.\nAlready-terminal runs (succeeded/failed/cancelled) return 409.\n\nWebhooks (GPUB-412): a pending run flipped here emits `training.run.cancelled`\nimmediately; a leased/running run emits it when the worker actually finalises\nthe cancel. Best-effort + signed; subscribe via `POST /v1/webhooks`.",
+        "description": "Cancel a pending or running training run.\n\nPending runs (no worker has leased them yet) are flipped directly to\n'cancelled' and the credit reservation released in full. Running runs\nare signalled — the worker observes the cancel intent on the next\nheartbeat tick (≤30s) and SIGTERMs the trainer process. The\ncustomer-visible status will transition cancelled within a minute.\nAlready-terminal runs (succeeded/failed/cancelled) return 409.\n\nWebhooks (GPUB-412): a pending run flipped here emits `training.run.cancelled`\nimmediately; a leased/running run emits it when the worker actually finalises\nthe cancel. Best-effort + signed; subscribe via `POST /v1/webhooks`.",
         "operationId": "cancel_training_run_v1_training_runs__run_id__cancel_post",
         "parameters": [
           {
@@ -15550,7 +15550,7 @@
                 }
               }
             },
-            "description": "Bad request \u2014 malformed input or a failed validation (returned as the standard error envelope)."
+            "description": "Bad request — malformed input or a failed validation (returned as the standard error envelope)."
           },
           "401": {
             "content": {
@@ -15560,7 +15560,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -15570,7 +15570,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "404": {
             "content": {
@@ -15580,7 +15580,7 @@
                 }
               }
             },
-            "description": "Not found \u2014 the resource does not exist or is not visible to this tenant."
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
           },
           "409": {
             "content": {
@@ -15590,7 +15590,7 @@
                 }
               }
             },
-            "description": "Conflict \u2014 the request conflicts with the current state of the resource."
+            "description": "Conflict — the request conflicts with the current state of the resource."
           },
           "503": {
             "content": {
@@ -15600,7 +15600,7 @@
                 }
               }
             },
-            "description": "Service unavailable \u2014 the capability is not currently available on this server."
+            "description": "Service unavailable — the capability is not currently available on this server."
           }
         },
         "summary": "Cancel Training Run",
@@ -15611,7 +15611,7 @@
     },
     "/v1/training/runs/{run_id}/download": {
       "get": {
-        "description": "Pre-signed download URL for the trained-model weights / LoRA adapter.\n\nReturns a JSON envelope, NOT a 302 redirect \u2014 clients should fetch\nthe URL directly so the gateway never proxies bytes (saves egress).\n\nOnly available when status='succeeded' AND durability='replicated'\n(Kimi rule: completed_local is not durable enough to hand to\ncustomers; if the local box went down, the URL would 404).",
+        "description": "Pre-signed download URL for the trained-model weights / LoRA adapter.\n\nReturns a JSON envelope, NOT a 302 redirect — clients should fetch\nthe URL directly so the gateway never proxies bytes (saves egress).\n\nOnly available when status='succeeded' AND durability='replicated'\n(Kimi rule: completed_local is not durable enough to hand to\ncustomers; if the local box went down, the URL would 404).",
         "operationId": "download_training_run_artifact_v1_training_runs__run_id__download_get",
         "parameters": [
           {
@@ -15706,7 +15706,7 @@
                 }
               }
             },
-            "description": "Bad request \u2014 malformed input or a failed validation (returned as the standard error envelope)."
+            "description": "Bad request — malformed input or a failed validation (returned as the standard error envelope)."
           },
           "401": {
             "content": {
@@ -15716,7 +15716,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -15726,7 +15726,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "404": {
             "content": {
@@ -15736,7 +15736,7 @@
                 }
               }
             },
-            "description": "Not found \u2014 the resource does not exist or is not visible to this tenant."
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
           },
           "409": {
             "content": {
@@ -15746,7 +15746,7 @@
                 }
               }
             },
-            "description": "Conflict \u2014 the request conflicts with the current state of the resource."
+            "description": "Conflict — the request conflicts with the current state of the resource."
           }
         },
         "summary": "Download Training Run Artifact",
@@ -15757,7 +15757,7 @@
     },
     "/v1/usage/by_modality": {
       "get": {
-        "description": "Per-modality usage counters for the current billing period.\n\nWindow: **calendar month, UTC**. Aligns with monthly Stripe/Paystack\nsubscription cycles so the meter matches the invoice the customer\nwill receive \u2014 not a rolling 30d smoothing window.\n\nREAD-ONLY. Does NOT decrement balance, does NOT show caps (caps\nland W5a), does NOT bill. Single GBP-pence balance on\n`/v1/billing/balance` remains authoritative for enforcement.\n\nReturns:\n- `period_start` / `period_end` \u2014 ISO-8601 UTC bounds of the calendar\n  month, half-open `[start, end)`.\n- `modalities` \u2014 dict keyed by `chat` / `audio` / `embed` / `image` /\n  `video`. Each value has:\n    - `units` \u2014 sum of `gpubox_usage_events.units` for this modality,\n      FLOORED to int for display (tokens are always integer in v1;\n      audio is sub-second \u2014 see `units_precise`).\n    - `units_precise` \u2014 exact Decimal sum serialized as a string\n      (`\"12.9\"`), mirroring `balance.py`'s `balance_pence_precise`\n      shape. Use this for accounting / charts that aggregate.\n      Without it `int(SUM(0.4))` over hundreds of sub-second audio\n      requests would drop the entire month's audio total to zero.\n    - `request_count` \u2014 number of finalized requests.\n    - `unit_type` \u2014 e.g. `\"tokens\"` for chat/embed,\n      `\"audio_seconds\"` for audio. UI uses this to render the right\n      label next to the number; without it \"3600\" for audio would\n      be ambiguous. The default value (used when no events exist\n      this period) MATCHES the writer's value, so zero-month and\n      non-zero-month responses use the same label.\n  `image` / `video` are always zero in v1 \u2014 their writers ship in\n  W3+ \u2014 but the keys are present so the UsageMeter component\n  renders the full strip without conditional keys.\n- `excluded_request_count` \u2014 count of finalized requests NOT\n  bucketed into a modality (`/v1/training/runs` is the only excluded\n  endpoint today; training has GPU-hour semantics + its own\n  dashboard). Operator-facing sanity check.",
+        "description": "Per-modality usage counters for the current billing period.\n\nWindow: **calendar month, UTC**. Aligns with monthly Stripe/Paystack\nsubscription cycles so the meter matches the invoice the customer\nwill receive — not a rolling 30d smoothing window.\n\nREAD-ONLY. Does NOT decrement balance, does NOT show caps (caps\nland W5a), does NOT bill. Single GBP-pence balance on\n`/v1/billing/balance` remains authoritative for enforcement.\n\nReturns:\n- `period_start` / `period_end` — ISO-8601 UTC bounds of the calendar\n  month, half-open `[start, end)`.\n- `modalities` — dict keyed by `chat` / `audio` / `embed` / `image` /\n  `video`. Each value has:\n    - `units` — sum of `gpubox_usage_events.units` for this modality,\n      FLOORED to int for display (tokens are always integer in v1;\n      audio is sub-second — see `units_precise`).\n    - `units_precise` — exact Decimal sum serialized as a string\n      (`\"12.9\"`), mirroring `balance.py`'s `balance_pence_precise`\n      shape. Use this for accounting / charts that aggregate.\n      Without it `int(SUM(0.4))` over hundreds of sub-second audio\n      requests would drop the entire month's audio total to zero.\n    - `request_count` — number of finalized requests.\n    - `unit_type` — e.g. `\"tokens\"` for chat/embed,\n      `\"audio_seconds\"` for audio. UI uses this to render the right\n      label next to the number; without it \"3600\" for audio would\n      be ambiguous. The default value (used when no events exist\n      this period) MATCHES the writer's value, so zero-month and\n      non-zero-month responses use the same label.\n  `image` / `video` are always zero in v1 — their writers ship in\n  W3+ — but the keys are present so the UsageMeter component\n  renders the full strip without conditional keys.\n- `excluded_request_count` — count of finalized requests NOT\n  bucketed into a modality (`/v1/training/runs` is the only excluded\n  endpoint today; training has GPU-hour semantics + its own\n  dashboard). Operator-facing sanity check.",
         "operationId": "usage_by_modality_v1_usage_by_modality_get",
         "parameters": [
           {
@@ -15958,7 +15958,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Create a vault collection (RFC v2 \u00a75.2 PR-B)",
+        "summary": "Create a vault collection (RFC v2 §5.2 PR-B)",
         "tags": [
           "Vault"
         ]
@@ -15966,7 +15966,7 @@
     },
     "/v1/vault/documents": {
       "get": {
-        "description": "List live documents owned by the calling tenant, newest-first.\n\nReturns the tenant's documents in the active workspace REGARDLESS of\ncollection kind \u2014 chat-attachment docs (paperclip uploads, kind='chat')\nare listed alongside persistent-corpus docs (kind='general'/'training').\nUntil 2026-06-26 chat docs were hidden from this listing (cosmetic\ncarve-out); they are now surfaced (option A) and each item carries its\ncollection `kind` so the UI can badge a chat doc. Tenant + workspace\nisolation is unchanged \u2014 a doc only appears for its owning tenant within\nthe active workspace.\n\nRead path \u2014 gated on the hardened flag like its siblings but NOT on\nthe per-tenant Vault entitlement (a lapsed tenant must still be able\nto enumerate + export their own data; GDPR portability \u2014 same posture\nas the download route). Soft-deleted documents are excluded.",
+        "description": "List live documents owned by the calling tenant, newest-first.\n\nReturns the tenant's documents in the active workspace REGARDLESS of\ncollection kind — chat-attachment docs (paperclip uploads, kind='chat')\nare listed alongside persistent-corpus docs (kind='general'/'training').\nUntil 2026-06-26 chat docs were hidden from this listing (cosmetic\ncarve-out); they are now surfaced (option A) and each item carries its\ncollection `kind` so the UI can badge a chat doc. Tenant + workspace\nisolation is unchanged — a doc only appears for its owning tenant within\nthe active workspace.\n\nRead path — gated on the hardened flag like its siblings but NOT on\nthe per-tenant Vault entitlement (a lapsed tenant must still be able\nto enumerate + export their own data; GDPR portability — same posture\nas the download route). Soft-deleted documents are excluded.",
         "operationId": "list_documents_v1_vault_documents_get",
         "parameters": [
           {
@@ -16129,7 +16129,7 @@
     },
     "/v1/vault/documents/{document_id}": {
       "delete": {
-        "description": "Tombstone a document the tenant owns + stamp a 30-day hard-purge\ndeadline. GDPR Art.17 right-to-erasure.\n\nRead/erase path \u2014 gated on the hardened flag but NOT on the Vault\nentitlement: a lapsed tenant must always be able to delete their own\ndata (you can't paywall erasure). Tenant-scoped at the repo (RLS GUC +\nexplicit tenant_id predicate), so a document owned by another tenant\nis invisible and resolves to 404.\n\nReturns:\n  * 204 \u2014 the document was live and is now tombstoned.\n  * 404 \u2014 no live document with that id is owned by the tenant\n          (never existed, already deleted, or owned by someone else).\n          Idempotent-safe: a second DELETE of an already-deleted row\n          returns 404 without re-stamping the purge deadline.",
+        "description": "Tombstone a document the tenant owns + stamp a 30-day hard-purge\ndeadline. GDPR Art.17 right-to-erasure.\n\nRead/erase path — gated on the hardened flag but NOT on the Vault\nentitlement: a lapsed tenant must always be able to delete their own\ndata (you can't paywall erasure). Tenant-scoped at the repo (RLS GUC +\nexplicit tenant_id predicate), so a document owned by another tenant\nis invisible and resolves to 404.\n\nReturns:\n  * 204 — the document was live and is now tombstoned.\n  * 404 — no live document with that id is owned by the tenant\n          (never existed, already deleted, or owned by someone else).\n          Idempotent-safe: a second DELETE of an already-deleted row\n          returns 404 without re-stamping the purge deadline.",
         "operationId": "delete_document_v1_vault_documents__document_id__delete",
         "parameters": [
           {
@@ -16271,7 +16271,7 @@
     },
     "/v1/vault/documents/{document_id}/status": {
       "get": {
-        "description": "Resolve ONE document's indexing lifecycle, by id.\n\nWHY THIS EXISTS\n---------------\nThe chat composer chip needs a cheap, targeted poll keyed by the doc id it\nalready holds, so it can watch ONE upload walk scanning -> ... -> ready\nwithout re-paging the whole workspace list every few seconds. This route is\nthat path: it resolves a single doc via repo.get_document and returns the\nrolled-up `indexing_state` the chip polls until 'ready' / 'failed'.\n(Historically the list endpoint also EXCLUDED kind='chat' docs, so the list\ncouldn't observe a chat doc at all; that carve-out was relaxed in option A,\n2026-06-26, but the by-id poll remains the right read path for a live chip.)\n\nPOSTURE\n-------\n* Read path \u2014 gated on the hardened flag like its siblings, but NOT on the\n  per-tenant Vault entitlement: a FREE chat-attachment doc MUST be\n  status-pollable (same posture as list_documents + the download route).\n* Tenant + workspace scoped at the repo (RLS GUC + explicit tenant_id AND\n  workspace_id predicates in get_document). A doc owned by another tenant\n  OR living in another workspace is invisible and resolves to 404 \u2014 never\n  403 \u2014 so the route leaks nothing about a foreign id's existence (keeps\n  the workspace-isolation boundary, #373, and the SKU boundary clean).\n* A malformed (non-UUID) id resolves to 404 BEFORE the repo runs, matching\n  delete_document \u2014 a bad id can never name an owned row.\n\nReturns:\n  * 200 \u2014 the document is owned + visible; body carries its status.\n  * 404 \u2014 no live document with that id is owned by the tenant in the\n          active workspace (never existed, deleted, foreign, or malformed).",
+        "description": "Resolve ONE document's indexing lifecycle, by id.\n\nWHY THIS EXISTS\n---------------\nThe chat composer chip needs a cheap, targeted poll keyed by the doc id it\nalready holds, so it can watch ONE upload walk scanning -> ... -> ready\nwithout re-paging the whole workspace list every few seconds. This route is\nthat path: it resolves a single doc via repo.get_document and returns the\nrolled-up `indexing_state` the chip polls until 'ready' / 'failed'.\n(Historically the list endpoint also EXCLUDED kind='chat' docs, so the list\ncouldn't observe a chat doc at all; that carve-out was relaxed in option A,\n2026-06-26, but the by-id poll remains the right read path for a live chip.)\n\nPOSTURE\n-------\n* Read path — gated on the hardened flag like its siblings, but NOT on the\n  per-tenant Vault entitlement: a FREE chat-attachment doc MUST be\n  status-pollable (same posture as list_documents + the download route).\n* Tenant + workspace scoped at the repo (RLS GUC + explicit tenant_id AND\n  workspace_id predicates in get_document). A doc owned by another tenant\n  OR living in another workspace is invisible and resolves to 404 — never\n  403 — so the route leaks nothing about a foreign id's existence (keeps\n  the workspace-isolation boundary, #373, and the SKU boundary clean).\n* A malformed (non-UUID) id resolves to 404 BEFORE the repo runs, matching\n  delete_document — a bad id can never name an owned row.\n\nReturns:\n  * 200 — the document is owned + visible; body carries its status.\n  * 404 — no live document with that id is owned by the tenant in the\n          active workspace (never existed, deleted, foreign, or malformed).",
         "operationId": "get_document_status_v1_vault_documents__document_id__status_get",
         "parameters": [
           {
@@ -16413,7 +16413,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -16423,7 +16423,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "404": {
             "content": {
@@ -16588,7 +16588,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -16598,7 +16598,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "404": {
             "content": {
@@ -16645,7 +16645,7 @@
                 }
               }
             },
-            "description": "Service unavailable \u2014 the capability is not currently available on this server."
+            "description": "Service unavailable — the capability is not currently available on this server."
           }
         },
         "summary": "Save user-confirmed web-enrichment records into the vault (VE-W2)",
@@ -16768,7 +16768,7 @@
     },
     "/v1/webhooks/{webhook_id}": {
       "delete": {
-        "description": "Deactivate a subscription (soft \u2014 sets active=false). The delivery\nworker dead-letters events for inactive subscriptions; tenant_delete\npurges the rows. Soft so an accidental delete leaves an audit trail.",
+        "description": "Deactivate a subscription (soft — sets active=false). The delivery\nworker dead-letters events for inactive subscriptions; tenant_delete\npurges the rows. Soft so an accidental delete leaves an audit trail.",
         "operationId": "delete_webhook_v1_webhooks__webhook_id__delete",
         "parameters": [
           {
@@ -16986,7 +16986,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -16996,7 +16996,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "404": {
             "content": {
@@ -17006,7 +17006,7 @@
                 }
               }
             },
-            "description": "Not found \u2014 the resource does not exist or is not visible to this tenant."
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
           },
           "422": {
             "content": {
@@ -17074,7 +17074,7 @@
                 }
               }
             },
-            "description": "Bad request \u2014 malformed input or a failed validation (returned as the standard error envelope)."
+            "description": "Bad request — malformed input or a failed validation (returned as the standard error envelope)."
           },
           "401": {
             "content": {
@@ -17084,7 +17084,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -17094,7 +17094,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "404": {
             "content": {
@@ -17104,7 +17104,7 @@
                 }
               }
             },
-            "description": "Not found \u2014 the resource does not exist or is not visible to this tenant."
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
           },
           "409": {
             "content": {
@@ -17114,7 +17114,7 @@
                 }
               }
             },
-            "description": "Conflict \u2014 the request conflicts with the current state of the resource."
+            "description": "Conflict — the request conflicts with the current state of the resource."
           },
           "422": {
             "content": {
@@ -17135,7 +17135,7 @@
     },
     "/v1/workspaces/{workspace_id}": {
       "delete": {
-        "description": "Soft-delete a workspace. The Default workspace cannot be deleted.\n\nSoft-delete tombstones the row (frees its name/slug namespace). The rows\nit contains are NOT cascaded here \u2014 the workspace_id FK is ON DELETE\nRESTRICT, so a workspace that still owns rows cannot be hard-purged; the\nretention sweeper handles tombstoned-and-empty workspaces later. V1 keeps\nthe contained data intact and simply hides the workspace from the switcher.",
+        "description": "Soft-delete a workspace. The Default workspace cannot be deleted.\n\nSoft-delete tombstones the row (frees its name/slug namespace). The rows\nit contains are NOT cascaded here — the workspace_id FK is ON DELETE\nRESTRICT, so a workspace that still owns rows cannot be hard-purged; the\nretention sweeper handles tombstoned-and-empty workspaces later. V1 keeps\nthe contained data intact and simply hides the workspace from the switcher.",
         "operationId": "delete_workspace_v1_workspaces__workspace_id__delete",
         "parameters": [
           {
@@ -17184,7 +17184,7 @@
                 }
               }
             },
-            "description": "Bad request \u2014 malformed input or a failed validation (returned as the standard error envelope)."
+            "description": "Bad request — malformed input or a failed validation (returned as the standard error envelope)."
           },
           "401": {
             "content": {
@@ -17194,7 +17194,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -17204,7 +17204,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "404": {
             "content": {
@@ -17214,7 +17214,7 @@
                 }
               }
             },
-            "description": "Not found \u2014 the resource does not exist or is not visible to this tenant."
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
           },
           "422": {
             "content": {
@@ -17281,7 +17281,7 @@
                 }
               }
             },
-            "description": "Unauthorized \u2014 missing or invalid API credentials."
+            "description": "Unauthorized — missing or invalid API credentials."
           },
           "403": {
             "content": {
@@ -17291,7 +17291,7 @@
                 }
               }
             },
-            "description": "Forbidden \u2014 the authenticated principal may not perform this action."
+            "description": "Forbidden — the authenticated principal may not perform this action."
           },
           "404": {
             "content": {
@@ -17301,7 +17301,7 @@
                 }
               }
             },
-            "description": "Not found \u2014 the resource does not exist or is not visible to this tenant."
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
           },
           "422": {
             "content": {
@@ -17332,7 +17332,7 @@
       "name": "Models"
     },
     {
-      "description": "OpenAI-compatible chat completions \u2014 streaming, tools, and vision.",
+      "description": "OpenAI-compatible chat completions — streaming, tools, and vision.",
       "name": "Chat"
     },
     {
@@ -17356,11 +17356,11 @@
       "name": "Batch"
     },
     {
-      "description": "Per-tenant document Vault \u2014 upload, malware scan, text extraction, and RAG retrieval. Processing stays on UK infrastructure.",
+      "description": "Per-tenant document Vault — upload, malware scan, text extraction, and RAG retrieval. Processing stays on UK infrastructure.",
       "name": "Vault"
     },
     {
-      "description": "Web enrichment \u2014 fetch public pages and extract structured data. Preview (POST /v1/vault/enrich) writes nothing; save (POST /v1/vault/enrich/save) persists accepted records into the Vault. Extraction runs zero-retention on UK infrastructure.",
+      "description": "Web enrichment — fetch public pages and extract structured data. Preview (POST /v1/vault/enrich) writes nothing; save (POST /v1/vault/enrich/save) persists accepted records into the Vault. Extraction runs zero-retention on UK infrastructure.",
       "name": "Vault-Enrich"
     },
     {
@@ -17368,7 +17368,7 @@
       "name": "Assistants"
     },
     {
-      "description": "Per-tenant workspaces \u2014 additive isolation containers for conversations, vault docs, assistants, and fine-tunes. Gated behind GPUBOX_WORKSPACES_ENABLED.",
+      "description": "Per-tenant workspaces — additive isolation containers for conversations, vault docs, assistants, and fine-tunes. Gated behind GPUBOX_WORKSPACES_ENABLED.",
       "name": "Workspaces"
     },
     {
@@ -17380,7 +17380,7 @@
       "name": "Argus"
     },
     {
-      "description": "Sign-up and session auth \u2014 magic-link, password, and Google SSO.",
+      "description": "Sign-up and session auth — magic-link, password, and Google SSO.",
       "name": "Auth"
     },
     {
@@ -17392,7 +17392,7 @@
       "name": "Users & Access"
     },
     {
-      "description": "Balance, usage, and subscriptions \u2014 Stripe (UK, GBP) and Paystack (NG, NGN).",
+      "description": "Balance, usage, and subscriptions — Stripe (UK, GBP) and Paystack (NG, NGN).",
       "name": "Billing"
     },
     {
