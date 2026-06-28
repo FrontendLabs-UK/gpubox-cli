@@ -12,7 +12,7 @@ import typer
 
 from gpubox_cli import auth
 from gpubox_cli import config as cfg
-from gpubox_cli.client import exit_on_error
+from gpubox_cli.client import ClientConfig, GPUBoxClient, exit_on_error
 from gpubox_cli.output import OutputCtx, emit_error, emit_json, emit_text
 
 app = typer.Typer(no_args_is_help=True, help="Authentication and identity commands.")
@@ -24,6 +24,16 @@ def _ctx(ctx: typer.Context) -> dict:
 
 def _output(ctx: typer.Context) -> OutputCtx:
     return _ctx(ctx).get("output", OutputCtx())
+
+
+def _client(ctx: typer.Context) -> GPUBoxClient:
+    obj = ctx.obj or {}
+    resolved = cfg.resolve(
+        profile_override=obj.get("profile"),
+        api_key_override=obj.get("api_key"),
+        base_url_override=obj.get("base_url"),
+    )
+    return GPUBoxClient(ClientConfig(api_key=resolved.api_key, base_url=resolved.base_url))
 
 
 @app.command("login")
@@ -133,6 +143,33 @@ def logout(ctx: typer.Context) -> None:
         else f"profile '{profile_name}' had no key to clear"
     )
     emit_text(out, msg)
+
+
+@app.command("set-name", help="Set (or clear) your account display name.")
+@exit_on_error
+def set_name(
+    ctx: typer.Context,
+    display_name: str = typer.Argument(
+        ...,
+        help="New display name. Pass an empty string ('') to clear it.",
+    ),
+) -> None:
+    """Update the signed-in user's display name via PATCH /v1/auth/me.
+
+    This is a HUMAN-identity surface: the gateway rejects service (gpb_live_*)
+    keys here. Use it with a user session / OIDC token. An empty/whitespace
+    value clears the name (back to null).
+    """
+    out = _output(ctx)
+    with _client(ctx) as client:
+        resp = client.request(
+            "PATCH", "/auth/me", json_body={"display_name": display_name},
+        )
+    if out.json_mode:
+        emit_json(out, resp)
+        return
+    name = resp.get("display_name") if isinstance(resp, dict) else None
+    emit_text(out, f"display name set: {name}" if name else "display name cleared")
 
 
 def signup_command(

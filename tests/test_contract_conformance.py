@@ -334,6 +334,31 @@ def test_workspace_delete_conforms(runner: CliRunner) -> None:
     _conforms(route)
 
 
+@respx.mock
+def test_workspace_update_conforms(runner: CliRunner) -> None:
+    route = respx.patch(f"{BASE}/workspaces/ws_1").mock(
+        return_value=httpx.Response(200, json={"id": "ws_1", "name": "Renamed"})
+    )
+    res = runner.invoke(
+        app,
+        ["workspace", "update", "ws_1", "--name", "Renamed",
+         "--default-model", "qwen2.5-32b-instruct",
+         "--response-language", "en-GB", "--watch-cadence", "daily"],
+    )
+    assert res.exit_code == 0, res.stderr
+    _conforms(route)
+
+
+@respx.mock
+def test_auth_set_name_conforms(runner: CliRunner) -> None:
+    route = respx.patch(f"{BASE}/auth/me").mock(
+        return_value=httpx.Response(200, json={"display_name": "Ada"})
+    )
+    res = runner.invoke(app, ["auth", "set-name", "Ada"])
+    assert res.exit_code == 0, res.stderr
+    _conforms(route)
+
+
 # ---------------------------------------------------------------------------
 # billing  (Stripe GBP + Paystack NGN checkout)
 # ---------------------------------------------------------------------------

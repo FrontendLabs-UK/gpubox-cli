@@ -16,7 +16,7 @@ import typer
 
 from gpubox_cli import config as cfg
 from gpubox_cli.client import ClientConfig, GPUBoxClient, exit_on_error
-from gpubox_cli.output import OutputCtx, emit_json, emit_text
+from gpubox_cli.output import OutputCtx, emit_error, emit_json, emit_text
 
 app = typer.Typer(no_args_is_help=True, help="Workspaces — per-tenant isolation containers.")
 
@@ -112,6 +112,72 @@ def use_workspace(
         emit_json(out, {"active_workspace": workspace_id, "name": resp.get("name")})
         return
     emit_text(out, f"active workspace set: {workspace_id}  {resp.get('name', '')}")
+
+
+@app.command(
+    "update",
+    help="Rename a workspace and/or set its Settings defaults "
+         "(model / response language / watch cadence).",
+)
+@exit_on_error
+def update_workspace(
+    ctx: typer.Context,
+    workspace_id: str = typer.Argument(..., help="Workspace id to update."),
+    name: str | None = typer.Option(None, "--name", help="New display name."),
+    slug: str | None = typer.Option(None, "--slug", help="New URL-friendly handle."),
+    description: str | None = typer.Option(None, "--description"),
+    default_model: str | None = typer.Option(
+        None, "--default-model",
+        help="Default BASE chat model id for the composer "
+             "(e.g. qwen2.5-32b-instruct). Fine-tunes default via "
+             "`gpb finetune use`, not here.",
+    ),
+    response_language: str | None = typer.Option(
+        None, "--response-language",
+        help="Preferred response language code (BCP-47, e.g. en-GB, yo).",
+    ),
+    watch_cadence: str | None = typer.Option(
+        None, "--watch-cadence",
+        help="Default Argus watch cadence: manual|hourly|daily|weekly.",
+    ),
+) -> None:
+    """Partially update a workspace.
+
+    Only the flags you pass are changed (omitted fields are left as-is). The
+    PATCH is tenant-scoped server-side, so you can only update a workspace your
+    own tenant owns. Validation (known model, cadence enum, language shape)
+    happens on the gateway; an invalid value returns a 400.
+    """
+    out = _output(ctx)
+    body: dict = {}
+    if name is not None:
+        body["name"] = name
+    if slug is not None:
+        body["slug"] = slug
+    if description is not None:
+        body["description"] = description
+    if default_model is not None:
+        body["default_model"] = default_model
+    if response_language is not None:
+        body["response_language"] = response_language
+    if watch_cadence is not None:
+        body["default_watch_cadence"] = watch_cadence
+    if not body:
+        emit_error(
+            out,
+            "nothing to update — pass at least one of --name / --slug / "
+            "--description / --default-model / --response-language / "
+            "--watch-cadence.",
+        )
+        raise typer.Exit(2)
+    with _client(ctx) as client:
+        resp = client.request(
+            "PATCH", f"/workspaces/{workspace_id}", json_body=body,
+        )
+    if out.json_mode:
+        emit_json(out, resp)
+        return
+    emit_text(out, f"updated: {resp.get('id', '?')}  {resp.get('name', '')}")
 
 
 @app.command("delete", help="Soft-delete a workspace by id (the Default cannot be deleted).")
