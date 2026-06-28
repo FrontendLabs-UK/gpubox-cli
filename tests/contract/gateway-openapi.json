@@ -1637,6 +1637,41 @@
         "title": "ConversationCreate",
         "type": "object"
       },
+      "ConversationInfo": {
+        "additionalProperties": false,
+        "properties": {
+          "conversation_key": {
+            "title": "Conversation Key",
+            "type": "string"
+          },
+          "exists": {
+            "title": "Exists",
+            "type": "boolean"
+          },
+          "message_count": {
+            "default": 0,
+            "title": "Message Count",
+            "type": "integer"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "required": [
+          "conversation_key",
+          "exists"
+        ],
+        "title": "ConversationInfo",
+        "type": "object"
+      },
       "ConversationList": {
         "properties": {
           "data": {
@@ -2701,6 +2736,93 @@
         "title": "ExportOut",
         "type": "object"
       },
+      "FileItem": {
+        "additionalProperties": false,
+        "properties": {
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "indexing_state": {
+            "title": "Indexing State",
+            "type": "string"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          }
+        },
+        "required": [
+          "id",
+          "filename",
+          "indexing_state"
+        ],
+        "title": "FileItem",
+        "type": "object"
+      },
+      "FilesInfo": {
+        "additionalProperties": false,
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "chat_attachment_count": {
+            "default": 0,
+            "title": "Chat Attachment Count",
+            "type": "integer"
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/FileItem"
+            },
+            "title": "Documents",
+            "type": "array"
+          },
+          "has_more": {
+            "default": false,
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "limit": {
+            "default": 0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "total_count": {
+            "default": 0,
+            "title": "Total Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "available"
+        ],
+        "title": "FilesInfo",
+        "type": "object"
+      },
       "GrantAclRequest": {
         "additionalProperties": false,
         "properties": {
@@ -3070,6 +3192,54 @@
         "title": "ImageGenerationResponse",
         "type": "object"
       },
+      "InspectorResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "conversation": {
+            "$ref": "#/components/schemas/ConversationInfo"
+          },
+          "files": {
+            "$ref": "#/components/schemas/FilesInfo"
+          },
+          "memory": {
+            "$ref": "#/components/schemas/MemoryInfo"
+          },
+          "model_card": {
+            "$ref": "#/components/schemas/ModelCard"
+          },
+          "object": {
+            "default": "chat.inspector",
+            "title": "Object",
+            "type": "string"
+          },
+          "request_id": {
+            "title": "Request Id",
+            "type": "string"
+          },
+          "system_prompt": {
+            "$ref": "#/components/schemas/SystemPromptInfo"
+          },
+          "vault_status": {
+            "$ref": "#/components/schemas/VaultStatus"
+          },
+          "workspace_id": {
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "conversation",
+          "vault_status",
+          "system_prompt",
+          "files",
+          "memory",
+          "model_card",
+          "request_id"
+        ],
+        "title": "InspectorResponse",
+        "type": "object"
+      },
       "InviteUserRequest": {
         "additionalProperties": false,
         "properties": {
@@ -3130,6 +3300,28 @@
           "login_ui_secret"
         ],
         "title": "IssueCodeRequest",
+        "type": "object"
+      },
+      "MemoryInfo": {
+        "additionalProperties": false,
+        "properties": {
+          "available": {
+            "default": false,
+            "title": "Available",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {},
+            "title": "Items",
+            "type": "array"
+          },
+          "note": {
+            "default": "No per-conversation memory store exists in v1.",
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "title": "MemoryInfo",
         "type": "object"
       },
       "MessageList": {
@@ -3263,6 +3455,51 @@
           "created_at"
         ],
         "title": "MessageOut",
+        "type": "object"
+      },
+      "ModelCard": {
+        "additionalProperties": false,
+        "properties": {
+          "context_window": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context Window"
+          },
+          "context_window_source": {
+            "default": "frontend_catalog",
+            "title": "Context Window Source",
+            "type": "string"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "region": {
+            "title": "Region",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "sovereign": {
+            "default": true,
+            "title": "Sovereign",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "model_id",
+          "source",
+          "region"
+        ],
+        "title": "ModelCard",
         "type": "object"
       },
       "OidcClientCreateRequest": {
@@ -3660,6 +3897,73 @@
         "title": "SearchResponse",
         "type": "object"
       },
+      "SessionItem": {
+        "additionalProperties": false,
+        "properties": {
+          "created": {
+            "title": "Created",
+            "type": "string"
+          },
+          "current": {
+            "default": false,
+            "title": "Current",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "last_seen": {
+            "title": "Last Seen",
+            "type": "string"
+          },
+          "user_agent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Agent"
+          }
+        },
+        "required": [
+          "id",
+          "created",
+          "last_seen"
+        ],
+        "title": "SessionItem",
+        "type": "object"
+      },
+      "SessionListResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/SessionItem"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "has_more": {
+            "default": false,
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "object": {
+            "default": "list",
+            "title": "Object",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "SessionListResponse",
+        "type": "object"
+      },
       "SessionVerifyRequest": {
         "additionalProperties": false,
         "description": "Same shape as VerifyRequest — accepts the magic-link token.",
@@ -3737,6 +4041,45 @@
           "label"
         ],
         "title": "SourceRefOut",
+        "type": "object"
+      },
+      "SpeechRequest": {
+        "description": "OpenAI-compatible /v1/audio/speech request body.",
+        "properties": {
+          "input": {
+            "description": "Text to synthesise. Max 4000 chars.",
+            "title": "Input",
+            "type": "string"
+          },
+          "model": {
+            "description": "Canonical model name. Use `cosyvoice2`.",
+            "title": "Model",
+            "type": "string"
+          },
+          "response_format": {
+            "default": "mp3",
+            "description": "One of mp3|opus|wav|pcm|mulaw_8000. Default mp3.",
+            "title": "Response Format",
+            "type": "string"
+          },
+          "speed": {
+            "default": 1.0,
+            "description": "Playback speed. v1 only supports 1.0.",
+            "title": "Speed",
+            "type": "number"
+          },
+          "voice": {
+            "default": "olamide",
+            "description": "Voice name. v1: `olamide`.",
+            "title": "Voice",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model",
+          "input"
+        ],
+        "title": "SpeechRequest",
         "type": "object"
       },
       "SsoConfigRequest": {
@@ -4025,6 +4368,47 @@
           "created_at"
         ],
         "title": "SubtenantOut",
+        "type": "object"
+      },
+      "SystemPromptInfo": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "default": "The active system prompt is server-side confidential and is not returned; only the profession framing source is surfaced.",
+            "title": "Note",
+            "type": "string"
+          },
+          "profession": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profession"
+          },
+          "profession_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profession Label"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source"
+        ],
+        "title": "SystemPromptInfo",
         "type": "object"
       },
       "TrainingRunCreate": {
@@ -4511,6 +4895,30 @@
         "title": "UpdateAssistantRequest",
         "type": "object"
       },
+      "UpdateMeRequest": {
+        "additionalProperties": false,
+        "description": "Self-service profile patch for the SIGNED-IN user.\n\nV1 scope: display_name ONLY. Email change is DEFERRED — it needs a\nre-verification / magic-link flow (a raw email swap would let a user move\ntheir account onto an unverified address and break the durable\n(tenant, lower(email)) identity invariant from 0017). Do NOT add a raw email\nsetter here.\n\ndisplay_name maps to gpubox_users.name (the SAME column the admin\nPATCH /v1/tenants/{tid}/users/{uid} writes — one canonical name per user).\nAn explicit empty/whitespace-only value CLEARS the name (-> NULL), matching\nthe \"no name set\" state /v1/auth/me already surfaces as null.",
+        "properties": {
+          "display_name": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The signed-in user's display name. Empty/whitespace clears it (back to null).",
+            "title": "Display Name"
+          }
+        },
+        "required": [
+          "display_name"
+        ],
+        "title": "UpdateMeRequest",
+        "type": "object"
+      },
       "UpdateUserRequest": {
         "additionalProperties": false,
         "properties": {
@@ -4900,6 +5308,41 @@
         "title": "VaultEnrichResponse",
         "type": "object"
       },
+      "VaultStatus": {
+        "additionalProperties": false,
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "document_count": {
+            "default": 0,
+            "title": "Document Count",
+            "type": "integer"
+          },
+          "indexed_count": {
+            "default": 0,
+            "title": "Indexed Count",
+            "type": "integer"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "required": [
+          "available"
+        ],
+        "title": "VaultStatus",
+        "type": "object"
+      },
       "VerifyRequest": {
         "additionalProperties": false,
         "properties": {
@@ -5043,6 +5486,28 @@
             "title": "Created At",
             "type": "string"
           },
+          "default_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Model"
+          },
+          "default_watch_cadence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Watch Cadence"
+          },
           "description": {
             "anyOf": [
               {
@@ -5069,6 +5534,17 @@
           "name": {
             "title": "Name",
             "type": "string"
+          },
+          "response_language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response Language"
           },
           "slug": {
             "anyOf": [
@@ -5166,6 +5642,86 @@
           "data"
         ],
         "title": "WorkspaceList",
+        "type": "object"
+      },
+      "WorkspacePatch": {
+        "additionalProperties": false,
+        "description": "Partial update for a workspace.\n\nEVERY field is optional. Only the fields the caller actually SENDS are\napplied (an omitted field is left unchanged; an explicit `null` CLEARS the\ncolumn). The handler reads `model_fields_set` to enforce this. Validation is\non SHAPE + the closed enums; `default_model` is checked against the static\nbase-chat id set (NOT the live registry — see KNOWN_DEFAULT_MODELS).\n`extra='forbid'` so an unknown/misspelled field (or the deferred `email`) is\nrejected rather than silently dropped.",
+        "properties": {
+          "default_model": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Model"
+          },
+          "default_watch_cadence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Watch Cadence"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 2048,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "response_language": {
+            "anyOf": [
+              {
+                "maxLength": 35,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response Language"
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slug"
+          }
+        },
+        "title": "WorkspacePatch",
         "type": "object"
       },
       "_GoogleStartRequest": {
@@ -7834,6 +8390,133 @@
         ]
       }
     },
+    "/v1/audio/speech": {
+      "post": {
+        "description": "OpenAI-compatible text-to-speech.\n\nDrop-in for `POST https://api.openai.com/v1/audio/speech`.\n\n**Model:** `cosyvoice2` (XTTS behind it until the CosyVoice2 swap).\n\n**Request:** `{model, input, voice, response_format, speed}`.\n`response_format` ∈ {mp3 (default), opus, wav, pcm, mulaw_8000}.\n`speed` must be `1.0` (other values 400). `input` ≤ 4000 chars.\n\n**Response:** raw audio bytes with the matching `Content-Type`.\n`pcm` / `mulaw_8000` are native upstream passthrough; `mp3`/`opus`/\n`wav` are transcoded from PCM via ffmpeg (501 if ffmpeg is absent).\n\n**Billing:** metered on OUTPUT-audio-seconds (the seconds of speech\nproduced), at the per-audio-minute audio rate.\n\nDARK: returns 503 `tts_disabled` while `GPUBOX_TTS_ENABLED` is OFF.",
+        "operationId": "create_speech_v1_audio_speech_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpeechRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "audio/L16": {},
+              "audio/basic": {},
+              "audio/mpeg": {},
+              "audio/ogg": {},
+              "audio/wav": {}
+            },
+            "description": "Audio bytes in the requested format."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create speech (text-to-speech)",
+        "tags": [
+          "Audio",
+          "Audio"
+        ]
+      }
+    },
+    "/v1/audio/speech/stream": {
+      "get": {
+        "description": "WebSocket endpoint (NOT an HTTP GET — documented under the `get` key only because OpenAPI 3.0 has no socket verb). Connect with `wss://<host>/api/v1/audio/speech/stream` and authenticate exactly like every Bearer route (session cookie or `Authorization: Bearer`).\n\n**Open frame (text, one-shot JSON):** `{\"model\":\"cosyvoice2\", \"input\":\"<one clause>\", \"voice\":\"olamide\", \"response_format\":\"mulaw_8000\"|\"pcm\"}`. v1 sends ONE full-utterance `input` per synth session (no partial-text-in). `mp3`/`opus`/`wav` are REJECTED on the stream with a clean close.\n\n**Server -> client:** binary audio chunks in the requested format as the upstream synthesises them.\n\n**Cancellation (the inverse of the STT stream):** on a client `{\"type\":\"cancel\"}` text frame OR a WS disconnect, the gateway IMMEDIATELY stops forwarding, terminally closes (`aclose()`) the upstream streamed response so the upstream aborts the synth and frees its GPU slot, and leaves no orphaned tasks. Metering settles at the actual streamed output-audio-seconds plus a small minimum charge (deters open+cancel free-synth abuse).\n\n**Close codes (RFC 6455):** 1000 normal/cancel/complete, 1001 client going away, 1008 auth/policy (`auth_required`, `tts_public_sku_disabled`, `stream_format_must_be_mulaw_or_pcm`, `input_too_long`), 1009 oversized frame, 1011 server (`tts_disabled`, `tts_not_configured`, `tts_upstream_unavailable`, `tts_upstream_error`, `tts_capacity`, `tenant_breaker_open`).\n\nDARK: closes immediately with `tts_disabled` while `GPUBOX_TTS_ENABLED` is OFF.",
+        "responses": {
+          "101": {
+            "description": "Switching Protocols — WebSocket upgrade accepted."
+          }
+        },
+        "summary": "Stream speech (WebSocket, telephony hot path) — DOCUMENTATION ONLY",
+        "tags": [
+          "Audio"
+        ],
+        "x-cancel-frame": {
+          "properties": {
+            "type": {
+              "enum": [
+                "cancel"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        },
+        "x-request-frame": {
+          "properties": {
+            "input": {
+              "maxLength": 4000,
+              "type": "string"
+            },
+            "model": {
+              "enum": [
+                "cosyvoice2"
+              ],
+              "type": "string"
+            },
+            "response_format": {
+              "default": "mulaw_8000",
+              "enum": [
+                "mulaw_8000",
+                "pcm"
+              ],
+              "type": "string"
+            },
+            "voice": {
+              "default": "olamide",
+              "enum": [
+                "olamide"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "model",
+            "input"
+          ],
+          "type": "object"
+        }
+      },
+      "x-websocket": true
+    },
     "/v1/audio/transcriptions": {
       "post": {
         "description": "OpenAI-compatible audio transcription.\n\nDrop-in replacement for `POST https://api.openai.com/v1/audio/transcriptions`.\n\n**Models live:**\n- `whisper-large-v3-turbo` — OpenAI Whisper large-v3-turbo, 100+ languages,\n  automatic language detection.\n\n**Request:** `multipart/form-data` with required `file` field. Optional\n`language` (ISO-639-1 hint), `prompt` (text bias), `temperature`,\n`response_format`.\n\n**Response formats:**\n- `json` (default) — `{\"text\": \"...\"}`.\n- `verbose_json` — adds `language`, `duration`, and per-segment timestamps.\n- `text` — plain transcribed text only.\n\n**Billing:** £0.005 per audio minute, billed on the actual audio duration\n(not file size). A 6-second clip is 0.1 minutes = £0.0005.\n\n**Limits:**\n- File size: 200 MB max.\n- Duration: 30 minutes max per request.\n- Supported formats: any audio/video the upstream Whisper can decode\n  (mp3, mp4, m4a, wav, webm, flac, ogg, etc.).",
@@ -8169,6 +8852,62 @@
           }
         },
         "summary": "Auth Me",
+        "tags": [
+          "Users & Access"
+        ]
+      },
+      "patch": {
+        "description": "Update the SIGNED-IN user's own profile (display name only, V1).\n\nAUTH — human-only (require_identity_auth)\n-----------------------------------------\nThis is a /v1/auth/** account-mutation surface. require_identity_auth\nREJECTS service keys (gpb_live_*) and enforces session vintage + the\nconditional MFA gate, so a service key can never edit a human's name. The CI\nauth-gate denylist (scripts/check_auth_gate_usage.py) also requires every NEW\n/v1/auth/** route to use this gate.\n\nSCOPING (load-bearing)\n----------------------\ngpubox_users has NO RLS GUC, so the EXPLICIT predicates ARE the boundary:\n`id = auth.user_id AND tenant_id = auth.tenant_id AND deleted_at IS NULL AND\nstatus NOT IN ('suspended','deleted')`. A user can ONLY ever update their OWN\nrow in their OWN tenant membership — never another user's, never another\ntenant's. auth.user_id is guaranteed non-None past require_identity_auth (it\n500s on the missing-user_id invariant), so no extra None-guard is needed.\n\nNORMALISATION\n-------------\nA blank / whitespace-only display_name is stored as NULL (the \"no name set\"\nstate), so the GET surfaces it as null consistently. A non-blank value is\nstripped of surrounding whitespace before storing.\n\nReturns the canonical {display_name} the GET would now report (the stored\nvalue), so the FE can reflect it without a follow-up read.",
+        "operationId": "update_auth_me_v1_auth_me_patch",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Auth Me",
         "tags": [
           "Users & Access"
         ]
@@ -8735,6 +9474,86 @@
         },
         "security": [],
         "summary": "Session Verify",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/v1/auth/sessions": {
+      "get": {
+        "description": "List the caller's ACTIVE (non-revoked, unexpired) sessions, newest first.\n\nREAD-ONLY over gpubox_sessions. Never returns ip or cookie_jti_hash. The\ncurrent session (cookie path) is flagged. require_identity_auth has already\nrejected service keys + enforced vintage/MFA.",
+        "operationId": "list_sessions_v1_auth_sessions_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized — missing or invalid API credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden — the authenticated principal may not perform this action."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List the signed-in user's active sessions",
         "tags": [
           "Auth"
         ]
@@ -9456,6 +10275,157 @@
           }
         },
         "summary": "Chat Completions",
+        "tags": [
+          "Chat"
+        ]
+      }
+    },
+    "/v1/chat/inspector": {
+      "get": {
+        "description": "Aggregate the chat Inspector accordions in ONE tenant+workspace read.\n\nREAD-ONLY. Returns vault status (persistent-corpus counts), safe\nsystem-prompt metadata (profession source only — NEVER the raw prompt),\na workspace files preview, the (empty) memory section, the resolved model\ncard, and the conversation summary. Vault/files report available=false when\nthe hardened vault is dark (no reading around the dark gate).",
+        "operationId": "chat_inspector_v1_chat_inspector_get",
+        "parameters": [
+          {
+            "description": "The conversation key the chat shell is viewing. Normalized server-side; a malformed key 400s, a valid-but-absent key returns conversation.exists=false (the pane loads before the first turn is persisted).",
+            "in": "query",
+            "name": "conversation_key",
+            "required": true,
+            "schema": {
+              "description": "The conversation key the chat shell is viewing. Normalized server-side; a malformed key 400s, a valid-but-absent key returns conversation.exists=false (the pane loads before the first turn is persisted).",
+              "title": "Conversation Key",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Scope to a workspace (V1.5 W1). Defaults to the tenant's active/Default workspace.",
+            "in": "query",
+            "name": "workspace",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Scope to a workspace (V1.5 W1). Defaults to the tenant's active/Default workspace.",
+              "title": "Workspace"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-GPUBox-Workspace",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Gpubox-Workspace"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-GPUBox-Profession",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Gpubox-Profession"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectorResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad request — malformed input or a failed validation (returned as the standard error envelope)."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized — missing or invalid API credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden — the authenticated principal may not perform this action."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Aggregated chat Inspector context (right-pane accordions)",
         "tags": [
           "Chat"
         ]
@@ -17315,6 +18285,123 @@
           }
         },
         "summary": "Get a workspace",
+        "tags": [
+          "Workspaces"
+        ]
+      },
+      "patch": {
+        "description": "Partially update a workspace owned by the calling tenant.\n\nPowers the Settings \"General -> Defaults\" card: rename (name/slug) and set\nthe per-workspace defaults default_model / response_language /\ndefault_watch_cadence (migration 0082).\n\nSEMANTICS\n---------\nOnly the fields the caller SENDS are touched. An omitted field is left\nunchanged; an explicit `null` CLEARS that column (back to \"no default\").\n`model_fields_set` distinguishes the two — Pydantic alone cannot.\n\nSCOPING (load-bearing)\n----------------------\nThe UPDATE carries an EXPLICIT `tenant_id = $` predicate alongside `id = $`\nand `deleted_at IS NULL`. The container table's RLS is tenant-permissive, but\nthe explicit predicate is the real boundary under any BYPASSRLS reuse (the\nW1 resolver-forge lesson): a caller can NEVER PATCH another tenant's\nworkspace — a foreign/forged id resolves to 0 rows -> 404, never a\ncross-tenant write. The Default workspace CAN be renamed (unlike delete),\nbut the rename still respects the per-tenant name/slug uniqueness (409).",
+        "operationId": "update_workspace_v1_workspaces__workspace_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspacePatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workspace"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad request — malformed input or a failed validation (returned as the standard error envelope)."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized — missing or invalid API credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden — the authenticated principal may not perform this action."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict — the request conflicts with the current state of the resource."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update a workspace (rename + Settings defaults)",
         "tags": [
           "Workspaces"
         ]

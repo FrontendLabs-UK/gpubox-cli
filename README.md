@@ -174,6 +174,7 @@ lives at `https://api.gpubox.ai/docs`.
 | `gpb signup`                         | (browser)                     | opens `https://gpubox.ai/signup` (no API call)       |
 | `gpb auth login`                     | (local)                       | writes credentials file (mode 0600)                  |
 | `gpb auth status`                    | GET `/v1/auth/whoami`         | falls back to "unverified" on 404/405                |
+| `gpb auth set-name <name>`           | PATCH `/v1/auth/me`           | sets your display name (human session only — service keys rejected); `''` clears |
 | `gpb auth logout`                    | (local)                       | clears API key, keeps base_url + default_model       |
 | `gpb profile list/use/remove`        | (local)                       | edits credentials/config files only                  |
 | `gpb config get/set`                 | (local)                       | edits `config.toml` only                             |
