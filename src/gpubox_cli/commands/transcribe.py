@@ -33,7 +33,15 @@ def run(
         dir_okay=False,
         resolve_path=True,
     ),
-    model: str = typer.Option(DEFAULT_MODEL, "--model", "-m", help="Whisper model id."),
+    model: str = typer.Option(
+        DEFAULT_MODEL, "--model", "-m",
+        help=(
+            "Whisper model id. Default 'whisper-large-v3'. "
+            "Selectable: 'whisper-large-v3-turbo', or 'ng-whisper-medium-v4b' "
+            "(owned-model lane — routed to a dedicated upstream when wired on "
+            "the gateway, otherwise falls through to the default Whisper)."
+        ),
+    ),
     language: str | None = typer.Option(
         None, "--language", "-l", help="ISO-639-1 language hint (e.g. 'en', 'yo')."
     ),

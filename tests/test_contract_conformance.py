@@ -584,6 +584,33 @@ def test_transcribe_route_conforms(runner: CliRunner, tmp_path: Path) -> None:
 
 
 @respx.mock
+def test_transcribe_owned_model_id_sent(runner: CliRunner, tmp_path: Path) -> None:
+    """gpb transcribe --model ng-whisper-medium-v4b forwards that model id.
+
+    The owned-model STT lane (gateway feat/stt-medium-v4b-route) is selected
+    by the `model` form field; the CLI must pass the operator-chosen id
+    through unchanged so the gateway can route it to the owned upstream.
+    """
+    audio = tmp_path / "clip.wav"
+    audio.write_bytes(b"RIFFfake-wav-bytes")
+    route = respx.post(f"{BASE}/audio/transcriptions").mock(
+        return_value=httpx.Response(200, json={"text": "hello"})
+    )
+    res = runner.invoke(
+        app,
+        ["transcribe", str(audio), "--model", "ng-whisper-medium-v4b",
+         "--format", "json"],
+    )
+    assert res.exit_code == 0, res.stderr
+    assert route.called, "transcribe never sent the expected request"
+    sent = route.calls.last.request
+    _assert_route_registered(sent)
+    # Multipart body carries the chosen model id verbatim.
+    assert b"ng-whisper-medium-v4b" in sent.content
+    assert b'name="model"' in sent.content
+
+
+@respx.mock
 def test_vault_corpora_upload_route_conforms(
     runner: CliRunner, tmp_path: Path
 ) -> None:
