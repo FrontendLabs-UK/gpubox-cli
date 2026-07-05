@@ -210,6 +210,37 @@
         "title": "AdapterResponse",
         "type": "object"
       },
+      "AddSourceRequest": {
+        "description": "Link EXACTLY ONE source to a watch — a GLOBAL curated source (``source_id``)\nOR a tenant BYO source (``tenant_source_id``), never both, never neither (the\n0091 XOR; the single-source-per-watch guard is preserved). ``tenant_source_id``\nrequires the BYO layer to be enabled.",
+        "properties": {
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The GLOBAL curated source id to link.",
+            "title": "Source Id"
+          },
+          "tenant_source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The tenant BYO source id to link (requires BYO enabled).",
+            "title": "Tenant Source Id"
+          }
+        },
+        "title": "AddSourceRequest",
+        "type": "object"
+      },
       "AttachFileRequest": {
         "additionalProperties": false,
         "properties": {
@@ -1324,6 +1355,122 @@
         "title": "CollectionOut",
         "type": "object"
       },
+      "CombinedInboxItemResponse": {
+        "description": "A unified inbox row — vault OR web. ``kind`` ('vault'|'web'),\n``evidence_mode`` ('grounded_vault' for a vault inform | 'attributed_snapshot'\nfor a web inform — the EXACT values the 0085 argus_combined_inbox view emits)\nand ``source_tier`` are EXPOSED so the FE renders attributed-snapshot vs\ngrounded informs correctly (the whole point of the combined stream).",
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "citations": {
+            "items": {},
+            "title": "Citations",
+            "type": "array"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "evidence_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Mode"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "read": {
+            "title": "Read",
+            "type": "boolean"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Id"
+          },
+          "source_tier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Tier"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "evidence_mode",
+          "source_tier",
+          "snapshot_id",
+          "run_id",
+          "title",
+          "body",
+          "citations",
+          "confidence",
+          "read"
+        ],
+        "title": "CombinedInboxItemResponse",
+        "type": "object"
+      },
+      "CombinedInboxListResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CombinedInboxItemResponse"
+            },
+            "title": "Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "CombinedInboxListResponse",
+        "type": "object"
+      },
       "ComplianceEvidence": {
         "properties": {
           "attestations_latest_at": {
@@ -2101,6 +2248,46 @@
         "title": "CreateAssistantRequest",
         "type": "object"
       },
+      "CreateWatchRequest": {
+        "properties": {
+          "cadence": {
+            "default": "daily",
+            "description": "manual | hourly | daily | weekly",
+            "title": "Cadence",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "question": {
+            "description": "The standing web question to keep answered.",
+            "maxLength": 2000,
+            "minLength": 4,
+            "title": "Question",
+            "type": "string"
+          },
+          "sensitivity": {
+            "default": "standard",
+            "description": "standard | sensitive",
+            "title": "Sensitivity",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "title": "CreateWatchRequest",
+        "type": "object"
+      },
       "DataDeleteRequest": {
         "additionalProperties": false,
         "description": "Body for POST /v1/tenant/data-delete.\n\n``mode`` selects between hard-purge and crypto-shred. No default;\nthe operator MUST be explicit about which destructive path they\nwant — the two have very different audit and recoverability\ncharacteristics.",
@@ -2153,6 +2340,47 @@
           "excluded_unassessed"
         ],
         "title": "DatasetSummary",
+        "type": "object"
+      },
+      "DeleteTenantSourceResponse": {
+        "properties": {
+          "deleted": {
+            "title": "Deleted",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "snapshots_purged": {
+            "title": "Snapshots Purged",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "deleted",
+          "snapshots_purged"
+        ],
+        "title": "DeleteTenantSourceResponse",
+        "type": "object"
+      },
+      "DeleteWatchResponse": {
+        "properties": {
+          "deleted": {
+            "title": "Deleted",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "deleted"
+        ],
+        "title": "DeleteWatchResponse",
         "type": "object"
       },
       "DocumentExtractResponse": {
@@ -2823,6 +3051,39 @@
         "title": "FilesInfo",
         "type": "object"
       },
+      "FinetuneStatus": {
+        "properties": {
+          "consented": {
+            "title": "Consented",
+            "type": "boolean"
+          },
+          "entitled": {
+            "title": "Entitled",
+            "type": "boolean"
+          },
+          "finetune_enabled": {
+            "title": "Finetune Enabled",
+            "type": "boolean"
+          },
+          "lora_serving_enabled": {
+            "title": "Lora Serving Enabled",
+            "type": "boolean"
+          },
+          "w3_finetunes_enabled": {
+            "title": "W3 Finetunes Enabled",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "finetune_enabled",
+          "w3_finetunes_enabled",
+          "lora_serving_enabled",
+          "entitled",
+          "consented"
+        ],
+        "title": "FinetuneStatus",
+        "type": "object"
+      },
       "GrantAclRequest": {
         "additionalProperties": false,
         "properties": {
@@ -3300,6 +3561,52 @@
           "login_ui_secret"
         ],
         "title": "IssueCodeRequest",
+        "type": "object"
+      },
+      "LinkSourceResponse": {
+        "properties": {
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "linked": {
+            "title": "Linked",
+            "type": "boolean"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          },
+          "watch_id": {
+            "title": "Watch Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "watch_id",
+          "source_id",
+          "linked",
+          "kind"
+        ],
+        "title": "LinkSourceResponse",
+        "type": "object"
+      },
+      "MarkReadResponse": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "read": {
+            "title": "Read",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "read"
+        ],
+        "title": "MarkReadResponse",
         "type": "object"
       },
       "MemoryInfo": {
@@ -4020,6 +4327,22 @@
         "title": "SignupRequest",
         "type": "object"
       },
+      "SourceListResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/SourceResponse"
+            },
+            "title": "Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "SourceListResponse",
+        "type": "object"
+      },
       "SourceRefOut": {
         "properties": {
           "kind": {
@@ -4041,6 +4364,39 @@
           "label"
         ],
         "title": "SourceRefOut",
+        "type": "object"
+      },
+      "SourceResponse": {
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "source_tier": {
+            "title": "Source Tier",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "display_name",
+          "kind",
+          "source_tier"
+        ],
+        "title": "SourceResponse",
         "type": "object"
       },
       "SpeechRequest": {
@@ -4165,6 +4521,49 @@
           "plan"
         ],
         "title": "StartSubscriptionRequest",
+        "type": "object"
+      },
+      "SubmitTenantSourceRequest": {
+        "description": "Submit a tenant's OWN public web source for auto-vetting. The tenant +\nworkspace are ALWAYS derived from the AuthContext (never the body). The\nendpoint must be a public https URL (the DB public-only invariant rejects\ninternal/credentialed/templated).",
+        "properties": {
+          "display_name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "endpoint": {
+            "description": "Public https endpoint.",
+            "maxLength": 2048,
+            "minLength": 1,
+            "title": "Endpoint",
+            "type": "string"
+          },
+          "key": {
+            "description": "A tenant-unique slug for the source.",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Key",
+            "type": "string"
+          },
+          "kind": {
+            "description": "page | feed | markets | news | regulator",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "kind",
+          "endpoint"
+        ],
+        "title": "SubmitTenantSourceRequest",
         "type": "object"
       },
       "SubtenantIn": {
@@ -4409,6 +4808,97 @@
           "source"
         ],
         "title": "SystemPromptInfo",
+        "type": "object"
+      },
+      "TenantSourceListResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/TenantSourceResponse"
+            },
+            "title": "Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "TenantSourceListResponse",
+        "type": "object"
+      },
+      "TenantSourceResponse": {
+        "description": "A tenant's OWN source as the tenant sees it. source_tier is the BYO tier\n('user' / 'user_verified') — NEVER 'official'. status surfaces the auto-vet\noutcome; vet_reason explains a rejection/quarantine. The FE renders the\n'unverified source — verify before acting' label off source_tier='user'.",
+        "properties": {
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "endpoint": {
+            "title": "Endpoint",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "quality_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quality Score"
+          },
+          "source_tier": {
+            "title": "Source Tier",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "vet_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vet Reason"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "display_name",
+          "kind",
+          "endpoint",
+          "source_tier",
+          "status",
+          "vet_reason",
+          "quality_score"
+        ],
+        "title": "TenantSourceResponse",
         "type": "object"
       },
       "TrainingRunCreate": {
@@ -4734,6 +5224,29 @@
           "has_more"
         ],
         "title": "TrainingRunsList",
+        "type": "object"
+      },
+      "UnlinkSourceResponse": {
+        "properties": {
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          },
+          "unlinked": {
+            "title": "Unlinked",
+            "type": "boolean"
+          },
+          "watch_id": {
+            "title": "Watch Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "watch_id",
+          "source_id",
+          "unlinked"
+        ],
+        "title": "UnlinkSourceResponse",
         "type": "object"
       },
       "UpdateAssistantRequest": {
@@ -5359,6 +5872,265 @@
         "title": "VerifyRequest",
         "type": "object"
       },
+      "VetSourceRequest": {
+        "properties": {
+          "adapter": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Adapter",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "enabled": {
+            "default": true,
+            "description": "Enable the source on vet.",
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "endpoint": {
+            "description": "Public https endpoint (public-only validated by the DB; localhost/RFC1918/templated endpoints are rejected).",
+            "maxLength": 2048,
+            "minLength": 1,
+            "title": "Endpoint",
+            "type": "string"
+          },
+          "key": {
+            "description": "Stable machine slug for the source.",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Key",
+            "type": "string"
+          },
+          "kind": {
+            "description": "page | feed | markets | news | regulator",
+            "title": "Kind",
+            "type": "string"
+          },
+          "source_tier": {
+            "description": "official | wire | news | blog",
+            "title": "Source Tier",
+            "type": "string"
+          },
+          "vetted_by": {
+            "description": "Non-PII actor slug (team/role/ticket handle, never an email).",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Vetted By",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "display_name",
+          "kind",
+          "endpoint",
+          "adapter",
+          "source_tier",
+          "vetted_by"
+        ],
+        "title": "VetSourceRequest",
+        "type": "object"
+      },
+      "VetSourceResponse": {
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "enabled"
+        ],
+        "title": "VetSourceResponse",
+        "type": "object"
+      },
+      "WatchListResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/WatchResponse"
+            },
+            "title": "Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "WatchListResponse",
+        "type": "object"
+      },
+      "WatchResponse": {
+        "properties": {
+          "cadence": {
+            "title": "Cadence",
+            "type": "string"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "last_run_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Run Status"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "sensitivity": {
+            "title": "Sensitivity",
+            "type": "string"
+          },
+          "workspace_id": {
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "workspace_id",
+          "question",
+          "label",
+          "cadence",
+          "enabled",
+          "sensitivity",
+          "last_run_status"
+        ],
+        "title": "WatchResponse",
+        "type": "object"
+      },
+      "WebhookDeliveriesPage": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/WebhookDelivery"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "object": {
+            "default": "list",
+            "title": "Object",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "WebhookDeliveriesPage",
+        "type": "object"
+      },
+      "WebhookDelivery": {
+        "properties": {
+          "attempt_count": {
+            "title": "Attempt Count",
+            "type": "integer"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "last_attempt_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Attempt Error"
+          },
+          "next_attempt_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Attempt At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id",
+          "event_type",
+          "status",
+          "attempt_count",
+          "next_attempt_at",
+          "last_attempt_error",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "WebhookDelivery",
+        "type": "object"
+      },
       "WebhookSecretRotated": {
         "properties": {
           "id": {
@@ -5478,6 +6250,29 @@
           "created_at"
         ],
         "title": "WebhookSubscriptionOut",
+        "type": "object"
+      },
+      "WebhookTestFired": {
+        "properties": {
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "status": {
+            "default": "queued",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id",
+          "event_type"
+        ],
+        "title": "WebhookTestFired",
         "type": "object"
       },
       "Workspace": {
@@ -6397,6 +7192,106 @@
         ]
       }
     },
+    "/v1/argus/admin/web/sources": {
+      "post": {
+        "description": "ADMIN source-vetting seam. Writes the GLOBAL curated directory via the 0089\nH1 SECURITY DEFINER function ``argus_web_source_vet`` — the ONLY directory\nwrite path the request-lane role retains (its direct DML on argus_web_sources\nwas REVOKEd by 0089). The 0084 public-only CHECK + all-roles trigger still\nvalidate the endpoint inside the DEFINER, so a localhost / RFC1918 /\ncredentialed / templated endpoint is REJECTED (mapped to 400). NOT a tenant\nendpoint: gated by ``_require_internal_admin`` (fel_internal + operator\nscope).",
+        "operationId": "vet_source_v1_argus_admin_web_sources_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VetSourceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VetSourceResponse"
+                }
+              }
+            },
+            "description": "The vetted source id."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad request — malformed input or a failed validation (returned as the standard error envelope)."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized — missing or invalid API credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden — the authenticated principal may not perform this action."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Vet a curated web source (operator/admin only)",
+        "tags": [
+          "Argus"
+        ]
+      }
+    },
     "/v1/argus/agents": {
       "get": {
         "operationId": "list_agents_v1_argus_agents_get",
@@ -7246,6 +8141,1742 @@
           }
         },
         "summary": "Mark an inform as read",
+        "tags": [
+          "Argus"
+        ]
+      }
+    },
+    "/v1/argus/pulse": {
+      "get": {
+        "description": "Proof-of-life for the bell: per-watch \"checked Nh ago / M sources / all\nquiet\" plus a workspace roll-up. Computed ON DEMAND from the run tables (the\nschedulers already persist these) — deliberately NOT inlined into the hot\nagent/watch list responses. Flag-gated: when GPUBOX_W4_ARGUS_PULSE_ENABLED\nis off, returns enabled=false with no watch data.",
+        "operationId": "read_pulse_v1_argus_pulse_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "workspace_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-GPUBox-Workspace",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Gpubox-Workspace"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized — missing or invalid API credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden — the authenticated principal may not perform this action."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Argus proof-of-life (per-watch + workspace roll-up)",
+        "tags": [
+          "Argus"
+        ]
+      }
+    },
+    "/v1/argus/receipts": {
+      "get": {
+        "description": "The \"Argus did X this week\" receipts — one coverage roll-up per complete\nweek (\"watched 212 items across 6 watches; 2 catches, 40 quiet\"). The\nartifact whose NON-arrival is the silence test. Flag-gated: when\nGPUBOX_W4_ARGUS_RECEIPT_ENABLED is off, returns enabled=false with no data.",
+        "operationId": "read_receipts_v1_argus_receipts_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 12,
+              "maximum": 52,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-GPUBox-Workspace",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Gpubox-Workspace"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized — missing or invalid API credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden — the authenticated principal may not perform this action."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Weekly value receipts (coverage roll-up per week)",
+        "tags": [
+          "Argus"
+        ]
+      }
+    },
+    "/v1/argus/web/inbox": {
+      "get": {
+        "description": "The unified inbox stream — V1 vault informs + V2 curated-web informs — via\nthe 0085 ``argus_combined_inbox`` view. Each row carries ``kind``\n('vault'|'web'), ``evidence_mode`` ('grounded_vault' | 'attributed_snapshot')\nand ``source_tier`` so the FE renders grounded-vault vs attributed-snapshot\ncorrectly. Read-gated by the authenticated session + active workspace\n(cross-tenant isolation).\n\nBYO dark-gate (the finding): the combined view UNIONs TENANT BYO informs\n(source_tier 'user'/'user_verified') into the web arm, so a process with the\ncurated layer ON but the BYO layer OFF would otherwise surface tenant-source\nrows. We pass ``include_byo=argus_byo_active()`` so BYO informs are filtered out\nwhile the BYO layer is dark — only vault + curated informs are returned.",
+        "operationId": "read_combined_inbox_v1_argus_web_inbox_get",
+        "parameters": [
+          {
+            "description": "Only unread informs.",
+            "in": "query",
+            "name": "unread",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Only unread informs.",
+              "title": "Unread",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-GPUBox-Workspace",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Gpubox-Workspace"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CombinedInboxListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized — missing or invalid API credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden — the authenticated principal may not perform this action."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read the combined Argus inbox (vault + curated-web informs)",
+        "tags": [
+          "Argus"
+        ]
+      }
+    },
+    "/v1/argus/web/inbox/{item_id}/read": {
+      "post": {
+        "operationId": "mark_web_inbox_read_v1_argus_web_inbox__item_id__read_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "title": "Item Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-GPUBox-Workspace",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Gpubox-Workspace"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkReadResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized — missing or invalid API credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden — the authenticated principal may not perform this action."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark a curated-web inform as read",
+        "tags": [
+          "Argus"
+        ]
+      }
+    },
+    "/v1/argus/web/sources": {
+      "get": {
+        "description": "The source-picker slice: live + enabled curated sources only (the 0084\nbroad-read SELECT RLS). GLOBAL — identical for every tenant — so no\ntenant/workspace scope; but still served on the RLS-enforced request pool so\na tenant can never see retired/disabled/un-vetted rows or the admin\nvetted_by slug.",
+        "operationId": "list_sources_v1_argus_web_sources_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized — missing or invalid API credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden — the authenticated principal may not perform this action."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List the live enabled curated source directory",
+        "tags": [
+          "Argus"
+        ]
+      },
+      "post": {
+        "description": "Submit a tenant's OWN public web source. RATE-LIMITED per tenant (429 on\nexcess). Writes via the 0090 H1 SECURITY DEFINER fn (the app role has no direct\nDML): the fn forces source_tier='user' + status='pending', enforces the\nper-tenant source CAP, and GUC-matches the scope. The endpoint passes the DB\npublic-only invariant (a localhost/RFC1918/credentialed/templated endpoint ->\n400 source_not_public, sanitized — no raw URL echo). The auto-vet pipeline (the\nBYO scheduler) then resolves it to approved|rejected. Tenant + workspace come\nfrom the AuthContext, NEVER the body.",
+        "operationId": "submit_tenant_source_v1_argus_web_sources_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "workspace_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-GPUBox-Workspace",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Gpubox-Workspace"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitTenantSourceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantSourceResponse"
+                }
+              }
+            },
+            "description": "The submitted source (status 'pending' until the auto-vet pipeline runs)."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad request — malformed input or a failed validation (returned as the standard error envelope)."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized — missing or invalid API credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden — the authenticated principal may not perform this action."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict — the request conflicts with the current state of the resource."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Too many requests — a rate or concurrency limit was hit; retry after backoff."
+          }
+        },
+        "summary": "Submit a tenant's own (BYO) web source for auto-vetting",
+        "tags": [
+          "Argus"
+        ]
+      }
+    },
+    "/v1/argus/web/sources/mine": {
+      "get": {
+        "description": "List the caller's OWN BYO sources (distinct from GET /v1/argus/web/sources,\nwhich is the GLOBAL curated directory). RLS scopes this to the caller's\ntenant/workspace; status/vet_reason surface the auto-vet outcome so the FE can\nrender pending/approved/rejected/quarantined + the verify-before-acting label.",
+        "operationId": "list_my_tenant_sources_v1_argus_web_sources_mine_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-GPUBox-Workspace",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Gpubox-Workspace"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantSourceListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized — missing or invalid API credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden — the authenticated principal may not perform this action."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List MY (tenant BYO) web sources",
+        "tags": [
+          "Argus"
+        ]
+      }
+    },
+    "/v1/argus/web/sources/{source_id}": {
+      "delete": {
+        "description": "GDPR erasure: delete a tenant source + PURGE its tenant snapshots (DB rows\nvia the 0090 H1 SECURITY DEFINER purge fn, which also tears down the dependent\nwatch link / inbox / run citations) AND delete the stored object-store blobs.\nTenant + workspace from the AuthContext. A wrong-tenant/non-existent id purges\nnothing -> 404.",
+        "operationId": "delete_tenant_source_v1_argus_web_sources__source_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "title": "Source Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-GPUBox-Workspace",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Gpubox-Workspace"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteTenantSourceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized — missing or invalid API credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden — the authenticated principal may not perform this action."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete MY (tenant BYO) source + purge its snapshots (GDPR erasure)",
+        "tags": [
+          "Argus"
+        ]
+      }
+    },
+    "/v1/argus/web/watches": {
+      "get": {
+        "operationId": "list_web_watches_v1_argus_web_watches_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "workspace_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-GPUBox-Workspace",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Gpubox-Workspace"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized — missing or invalid API credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden — the authenticated principal may not perform this action."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List curated-web watches",
+        "tags": [
+          "Argus"
+        ]
+      },
+      "post": {
+        "description": "Create a standing web watch (disabled by default — fail-closed). Scoped to\nthe authed tenant + active workspace; tenant/workspace come from the\nAuthContext, NEVER the body.",
+        "operationId": "create_web_watch_v1_argus_web_watches_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "workspace_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-GPUBox-Workspace",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Gpubox-Workspace"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchResponse"
+                }
+              }
+            },
+            "description": "The created watch."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad request — malformed input or a failed validation (returned as the standard error envelope)."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized — missing or invalid API credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden — the authenticated principal may not perform this action."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create a curated-web watch",
+        "tags": [
+          "Argus"
+        ]
+      }
+    },
+    "/v1/argus/web/watches/{watch_id}": {
+      "delete": {
+        "description": "Soft-delete (tombstone) a watch — its run history + delivered informs\nsurvive; the watch stops scheduling.",
+        "operationId": "delete_web_watch_v1_argus_web_watches__watch_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "watch_id",
+            "required": true,
+            "schema": {
+              "title": "Watch Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-GPUBox-Workspace",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Gpubox-Workspace"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteWatchResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized — missing or invalid API credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden — the authenticated principal may not perform this action."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Retire a curated-web watch",
+        "tags": [
+          "Argus"
+        ]
+      },
+      "get": {
+        "operationId": "get_web_watch_v1_argus_web_watches__watch_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "watch_id",
+            "required": true,
+            "schema": {
+              "title": "Watch Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-GPUBox-Workspace",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Gpubox-Workspace"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized — missing or invalid API credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden — the authenticated principal may not perform this action."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get a curated-web watch",
+        "tags": [
+          "Argus"
+        ]
+      }
+    },
+    "/v1/argus/web/watches/{watch_id}/sources": {
+      "post": {
+        "description": "Link a SINGLE source to a watch — a GLOBAL curated source (``source_id``) OR\na tenant BYO source (``tenant_source_id``), exactly one (the 0091 XOR). The\nwatch is single-source-per-watch (0087 hard backstop). The watch must be live +\nscoped to the caller (else 404). If the watch already links a source the add\nreturns 409 ``source_already_linked``. A bogus / non-existent / cross-tenant\nsource id is rejected by the RESTRICT composite FK as a 400. Linking a tenant\nsource requires the BYO layer enabled (else 404).",
+        "operationId": "add_watch_source_v1_argus_web_watches__watch_id__sources_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "watch_id",
+            "required": true,
+            "schema": {
+              "title": "Watch Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-GPUBox-Workspace",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Gpubox-Workspace"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddSourceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkSourceResponse"
+                }
+              }
+            },
+            "description": "The created link."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad request — malformed input or a failed validation (returned as the standard error envelope)."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized — missing or invalid API credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden — the authenticated principal may not perform this action."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict — the request conflicts with the current state of the resource."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Link a source (curated OR tenant BYO) to a watch",
+        "tags": [
+          "Argus"
+        ]
+      }
+    },
+    "/v1/argus/web/watches/{watch_id}/sources/{source_id}": {
+      "delete": {
+        "description": "POLYMORPHIC unlink (the BYO finding): the path ``source_id`` is the id the\nadd-source response surfaced — which may be a GLOBAL curated source_id OR a\ntenant BYO tenant_source_id (the 0091 polymorphic link). The original handler\nonly tried the curated ``remove_watch_source`` -> a BYO-linked watch 404'd and\nthe 0087 UNIQUE(watch_id) left it wedged (could never be relinked). We now try\nthe curated unlink, and on a miss try the tenant-source unlink, so EITHER link\nkind can be removed and the watch freed.\n\nThe tenant unlink path is attempted REGARDLESS of argus_byo_active() (only the\nweb gate guards this route): a watch must always be un-wedgeable even if the\nBYO layer was toggled dark after the link was made.",
+        "operationId": "remove_watch_source_v1_argus_web_watches__watch_id__sources__source_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "watch_id",
+            "required": true,
+            "schema": {
+              "title": "Watch Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "title": "Source Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-GPUBox-Workspace",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Gpubox-Workspace"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnlinkSourceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized — missing or invalid API credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden — the authenticated principal may not perform this action."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not found — the resource does not exist or is not visible to this tenant."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Unlink a source (curated OR tenant BYO) from a watch",
         "tags": [
           "Argus"
         ]
@@ -8519,7 +11150,7 @@
     },
     "/v1/audio/transcriptions": {
       "post": {
-        "description": "OpenAI-compatible audio transcription.\n\nDrop-in replacement for `POST https://api.openai.com/v1/audio/transcriptions`.\n\n**Models live:**\n- `whisper-large-v3-turbo` — OpenAI Whisper large-v3-turbo, 100+ languages,\n  automatic language detection.\n\n**Request:** `multipart/form-data` with required `file` field. Optional\n`language` (ISO-639-1 hint), `prompt` (text bias), `temperature`,\n`response_format`.\n\n**Response formats:**\n- `json` (default) — `{\"text\": \"...\"}`.\n- `verbose_json` — adds `language`, `duration`, and per-segment timestamps.\n- `text` — plain transcribed text only.\n\n**Billing:** £0.005 per audio minute, billed on the actual audio duration\n(not file size). A 6-second clip is 0.1 minutes = £0.0005.\n\n**Limits:**\n- File size: 200 MB max.\n- Duration: 30 minutes max per request.\n- Supported formats: any audio/video the upstream Whisper can decode\n  (mp3, mp4, m4a, wav, webm, flac, ogg, etc.).",
+        "description": "OpenAI-compatible audio transcription.\n\nDrop-in replacement for `POST https://api.openai.com/v1/audio/transcriptions`.\n\n**Models live:**\n- `whisper-large-v3-turbo` — OpenAI Whisper large-v3-turbo, 100+ languages,\n  automatic language detection. The default upstream.\n- `ng-whisper-medium-v4b` — faster-whisper int8_float16 owned-model lane\n  (routed to a dedicated upstream when configured on the box; otherwise\n  falls through to the default Whisper). Selectable via the `model` field.\n\nAny `model` value not in the routing map is forwarded to the default\nupstream unchanged.\n\n**Request:** `multipart/form-data` with required `file` field. Optional\n`language` (ISO-639-1 hint), `prompt` (text bias), `temperature`,\n`response_format`.\n\n**Response formats:**\n- `json` (default) — `{\"text\": \"...\"}`.\n- `verbose_json` — adds `language`, `duration`, and per-segment timestamps.\n- `text` — plain transcribed text only.\n\n**Billing:** £0.005 per audio minute, billed on the actual audio duration\n(not file size). A 6-second clip is 0.1 minutes = £0.0005.\n\n**Limits:**\n- File size: 200 MB max.\n- Duration: 30 minutes max per request.\n- Supported formats: any audio/video the upstream Whisper can decode\n  (mp3, mp4, m4a, wav, webm, flac, ogg, etc.).",
         "operationId": "transcriptions_v1_audio_transcriptions_post",
         "parameters": [
           {
@@ -12225,6 +14856,56 @@
         },
         "summary": "NDPA/GDPR export: adapters + training sources + consent trail",
         "tags": [
+          "Fine-tune"
+        ]
+      }
+    },
+    "/v1/finetune/status": {
+      "get": {
+        "operationId": "finetune_status_v1_finetune_status_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinetuneStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Finetune Status",
+        "tags": [
+          "Fine-tune",
           "Fine-tune"
         ]
       }
@@ -17844,6 +20525,159 @@
         ]
       }
     },
+    "/v1/webhooks/{webhook_id}/deliveries": {
+      "get": {
+        "description": "Paginated delivery history for one owned subscription.\n\nAnswers the three states that were previously indistinguishable without DB\naccess: never fired vs backing off vs dead-lettered. Tenant isolation is\nenforced by resolving the subscription through `_get_owned` FIRST (an\nexplicit tenant predicate — NOT RLS, which gpubox_webhook_outbox does not\nhave), then scoping the outbox read to that subscription id. A foreign\nwebhook_id 404s before any outbox row is read.",
+        "operationId": "list_webhook_deliveries_v1_webhooks__webhook_id__deliveries_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "webhook_id",
+            "required": true,
+            "schema": {
+              "title": "Webhook Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookDeliveriesPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Webhook Deliveries",
+        "tags": [
+          "Webhooks"
+        ]
+      }
+    },
+    "/v1/webhooks/{webhook_id}/deliveries/{event_id}/replay": {
+      "post": {
+        "description": "Re-enqueue a dead-lettered (or pending) delivery for one more retry cycle.\n\nWires the previously-caller-less `re_enqueue_for_replay` (which only moves\n'dead-letter'/'pending' rows — never re-fires an already-'delivered' event).\nOwnership is enforced by resolving the subscription first; a 404 is returned\nif the webhook is not owned OR no such (subscription, event_id) delivery\nexists in a replayable state.",
+        "operationId": "replay_webhook_delivery_v1_webhooks__webhook_id__deliveries__event_id__replay_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "webhook_id",
+            "required": true,
+            "schema": {
+              "title": "Webhook Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Replay Webhook Delivery",
+        "tags": [
+          "Webhooks"
+        ]
+      }
+    },
     "/v1/webhooks/{webhook_id}/rotate-secret": {
       "post": {
         "description": "Retire the current signing secret + mint a new one. Returns the new\nsecret ONCE. (rotate_secret opens its own txn/savepoint for atomicity.)",
@@ -17898,6 +20732,65 @@
           }
         },
         "summary": "Rotate Webhook Secret",
+        "tags": [
+          "Webhooks"
+        ]
+      }
+    },
+    "/v1/webhooks/{webhook_id}/test": {
+      "post": {
+        "description": "Fire ONE synthetic `webhook.test` delivery to an owned subscription.\n\nLets a receiver + signature be validated WITHOUT a real training run (no GPU\nspend). Semantics chosen deliberately (Codex finding):\n  * Enqueues DIRECTLY into the outbox for this subscription, bypassing the\n    producer's event_type matching — so it fires even though the\n    subscription is (correctly) not registered for 'webhook.test'.\n  * Uses a UNIQUE event_id per call (test-<webhook_id>-<uuid4>), so two\n    consecutive /test calls both deliver (no idempotency collapse).\n  * The payload carries NO tenant/customer data — only the webhook id and a\n    note — so a public test receiver (e.g. webhook.site) leaks nothing.\nThe real delivery worker signs + delivers it with the subscription's current\nsecret, exactly like a real event.",
+        "operationId": "test_webhook_v1_webhooks__webhook_id__test_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "webhook_id",
+            "required": true,
+            "schema": {
+              "title": "Webhook Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookTestFired"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Test Webhook",
         "tags": [
           "Webhooks"
         ]

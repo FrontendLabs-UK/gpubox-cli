@@ -131,8 +131,9 @@ gpb config get|set
 gpb signup
 
 gpb billing balance|topup|history
-gpb training submit|list|status|watch|download|cancel
+gpb training submit|list|status|watch|download|cancel|presets
 gpb hosting list|promote|tier|delete
+gpb webhooks create|list|get|delete|rotate-secret|deliveries|test|replay
 gpb vault enable|disable|search          # enable/disable are operator-only (no public route)
 gpb vault conversations list|get|delete
 gpb vault corpora list|get|create|delete
@@ -188,9 +189,18 @@ lives at `https://api.gpubox.ai/docs`.
 | `gpb training watch <run_id>`        | GET `/v1/training/runs/{run_id}` | polls every `--interval` seconds                  |
 | `gpb training download <run_id>`     | GET `/v1/training/runs/{run_id}/download` | JSON `{url,…}`; CLI fetches the signed URL → disk, verifies sha256 |
 | `gpb training cancel <run_id>`       | POST `/v1/training/runs/{run_id}/cancel` |                                            |
+| `gpb training presets`               | GET `/v1/training/presets`    | available presets (name, base, VRAM, est GPU-seconds) |
 | `gpb hosting list`                   | GET `/v1/hosting/models`      |                                                      |
 | `gpb hosting promote <run_id>`       | POST `/v1/hosting/models`     | idempotent; required `--name`; `--tier cold/warm/always_hot` |
 | `gpb hosting tier <model_id>`        | POST `/v1/hosting/models/{model_id}/transition` | body `{hosting_tier}`                  |
+| `gpb webhooks create`                | POST `/v1/webhooks`           | **service key only**; prints `signing_secret` once; defaults to all `training.run.*` events |
+| `gpb webhooks list`                  | GET `/v1/webhooks`            | this tenant's subscriptions                          |
+| `gpb webhooks get <id>`              | GET `/v1/webhooks/{id}`       |                                                      |
+| `gpb webhooks delete <id>`           | DELETE `/v1/webhooks/{id}`    | soft-deactivate                                      |
+| `gpb webhooks rotate-secret <id>`    | POST `/v1/webhooks/{id}/rotate-secret` | new `signing_secret` once (old works 24h)   |
+| `gpb webhooks deliveries <id>`       | GET `/v1/webhooks/{id}/deliveries` | `--limit`/`--cursor`; status/attempts/last error |
+| `gpb webhooks test <id>`             | POST `/v1/webhooks/{id}/test` | fire a synthetic `webhook.test` delivery (no GPU spend) |
+| `gpb webhooks replay <id> <event_id>`| POST `/v1/webhooks/{id}/deliveries/{event_id}/replay` | re-enqueue a dead-lettered delivery |
 | `gpb hosting delete <model_id>`      | DELETE `/v1/hosting/models/{model_id}` |                                             |
 | `gpb vault enable`                   | (none — operator-only)        | no public route; prints "email support@gpubox.ai"    |
 | `gpb vault disable`                  | (none — operator-only)        | no public route; prints "email support@gpubox.ai"    |

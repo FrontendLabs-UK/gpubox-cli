@@ -269,3 +269,25 @@ def cancel_run(ctx: typer.Context, run_id: str = typer.Argument(...)) -> None:
         emit_json(out, resp)
         return
     emit_text(out, f"cancelled: {run_id}")
+
+
+@app.command("presets")
+@exit_on_error
+def presets(ctx: typer.Context) -> None:
+    """List the available training presets (name, base model, VRAM, est. GPU-seconds)."""
+    out = _output(ctx)
+    with _client(ctx) as client:
+        resp = client.request("GET", "/training/presets")
+    if out.json_mode:
+        emit_json(out, resp)
+        return
+    items = resp.get("data", []) if isinstance(resp, dict) else resp
+    if not items:
+        emit_text(out, "(no presets)")
+        return
+    for p in items:
+        emit_text(
+            out,
+            f"{p.get('name')}  base={p.get('model_base')}  "
+            f"min_vram={p.get('min_vram_gb')}GB  est={p.get('estimated_gpu_seconds')}s",
+        )

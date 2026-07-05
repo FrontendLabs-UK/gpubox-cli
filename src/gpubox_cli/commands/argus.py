@@ -194,3 +194,32 @@ def mark_read(ctx: typer.Context, item_id: str = typer.Argument(...)) -> None:
         emit_json(out, resp)
         return
     emit_text(out, f"read: {item_id}")
+
+
+@app.command("pulse", help="Proof-of-life: is Argus watching, and is anything overdue?")
+@exit_on_error
+def pulse(ctx: typer.Context) -> None:
+    """Show, per watch, when Argus last checked, how many quiet checks since the
+    last inform, and whether it is overdue (amber). 'Quiet' means watched, not
+    dead. Read-only."""
+    out = _output(ctx)
+    with _client(ctx) as client:
+        resp = client.request(
+            "GET", "/argus/pulse", extra_headers=_active_workspace_headers())
+    if out.json_mode:
+        emit_json(out, resp)
+        return
+    if not (isinstance(resp, dict) and resp.get("enabled")):
+        emit_text(out, "Pulse is not enabled on this deployment.")
+        return
+    watches = resp.get("watches", [])
+    stale = resp.get("stale_count", 0)
+    emit_text(out, f"{len(watches)} watch(es) · {stale} overdue · "
+                   f"last check {resp.get('last_checked_at') or 'never'}")
+    for w in watches:
+        mark = "AMBER" if w.get("stale") else "ok   "
+        last = w.get("last_checked_at") or "never"
+        since = w.get("checks_since_last_inform")
+        since_s = "never run" if since is None else f"{since} quiet check(s) since inform"
+        emit_text(out, f"  [{mark}] {w.get('kind',''):<5} {w.get('id','?'):<38} "
+                       f"{(w.get('label') or ''):<24} last={last} · {since_s}")
