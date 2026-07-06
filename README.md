@@ -40,6 +40,7 @@ gpb chat "what's the capital of Nigeria?"
 gpb chat "what's wrong in this screenshot?" --image bug.png   # vision, auto-routed
 gpb embed "RAG retrieval target" --json | jq '.data[0].embedding | length'
 gpb transcribe ./meeting.mp3
+gpb upload ./contract.pdf                              # into your Vault; watches it index -> ready
 ```
 
 ## Vision (image input)
@@ -124,6 +125,7 @@ Streaming chat tokens render live in a TTY. When stdout is piped or
 gpb chat            one-shot or interactive REPL (--interactive); --image for vision
 gpb embed           one-shot embedding
 gpb transcribe      Whisper transcription of an audio file
+gpb upload          upload a document into your hardened Vault (V1.6); watches it index
 
 gpb auth login|status|logout
 gpb profile list|use|remove
@@ -172,6 +174,7 @@ lives at `https://api.gpubox.ai/docs`.
 | `gpb chat`                           | POST `/v1/chat/completions`   | SSE stream in a TTY, buffered otherwise; `--image` sends multimodal content to the vision model (`qwen2.5-vl-7b-instruct`) |
 | `gpb embed`                          | POST `/v1/embeddings`         | default model `BAAI/bge-m3`                          |
 | `gpb transcribe`                     | POST `/v1/audio/transcriptions` | multipart upload; Whisper-compatible                 |
+| `gpb upload`                         | POST `/v1/vault/documents` → signed PUT → poll `GET /v1/vault/documents/{id}/status` | two-step: mint URL, stream bytes to R2, watch pipeline (`scan→extract→chunk→embed`) to `ready`; `--no-wait`, `--collection`, `--workspace`, `--json` |
 | `gpb signup`                         | (browser)                     | opens `https://gpubox.ai/signup` (no API call)       |
 | `gpb auth login`                     | (local)                       | writes credentials file (mode 0600)                  |
 | `gpb auth status`                    | GET `/v1/auth/whoami`         | falls back to "unverified" on 404/405                |
