@@ -96,6 +96,15 @@ def _build_hyperparams(
 def create(
     ctx: typer.Context,
     preset: str = typer.Option(..., "--preset", help="Training preset (e.g. qwen32b-lora-r16)."),
+    intensity: str | None = typer.Option(
+        None,
+        "--intensity",
+        help=(
+            "Training effort for LoRA presets: quick | standard | thorough. Maps to a "
+            "target optimizer-STEP count + LR (higher = more visible tuning). Omit to "
+            "inherit the preset's default_intensity. Ignored by fixed-epoch presets."
+        ),
+    ),
     since: str | None = typer.Option(
         None,
         "--since",
@@ -127,6 +136,10 @@ def create(
     """
     out = _output(ctx)
     body: dict = {"preset": preset}
+    # Pass through verbatim (gateway validates). `is not None` so an explicit
+    # `--intensity ""` reaches the gateway instead of silently defaulting.
+    if intensity is not None:
+        body["training_intensity"] = intensity
     if since:
         body["since"] = since
     if until:

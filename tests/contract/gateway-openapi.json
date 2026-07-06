@@ -4926,7 +4926,7 @@
                 "type": "null"
               }
             ],
-            "description": "Overrides on top of preset.default_hyperparams",
+            "description": "Overrides on top of preset.default_hyperparams + training_intensity",
             "title": "Hyperparams"
           },
           "preset": {
@@ -4953,6 +4953,23 @@
             "description": "Dataset source. 'vault' builds a taint-filtered corpus from this tenant's own vault conversations (the only supported source).",
             "title": "Source",
             "type": "string"
+          },
+          "training_intensity": {
+            "anyOf": [
+              {
+                "enum": [
+                  "quick",
+                  "standard",
+                  "thorough"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "How hard to train. Maps to a target number of optimizer STEPS (and a learning rate), so it auto-adapts to corpus size — a small corpus gets many passes, a large one gets few. quick=fastest/lightest, standard=the sensible default (used when omitted, unless the preset pins its own step count), thorough=heaviest (best for a SMALL corpus / a visible persona, at the cost of some overfitting). Individual `hyperparams` still override this.",
+            "title": "Training Intensity"
           },
           "until": {
             "anyOf": [

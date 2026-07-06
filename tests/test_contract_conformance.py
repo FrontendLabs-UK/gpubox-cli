@@ -230,6 +230,35 @@ def test_training_submit_conforms(runner: CliRunner) -> None:
 
 
 @respx.mock
+def test_training_submit_intensity_conforms(runner: CliRunner) -> None:
+    """GPUB-620: `--intensity` sends top-level training_intensity — it must be a
+    declared field in the pinned contract (this catches a stale pin)."""
+    route = respx.post(f"{BASE}/training/runs").mock(
+        return_value=httpx.Response(200, json={"id": "run_i"})
+    )
+    res = runner.invoke(
+        app,
+        ["training", "submit", "--preset", "qwen32b-lora-r16", "--intensity", "standard"],
+    )
+    assert res.exit_code == 0, res.stderr
+    _conforms(route)
+
+
+@respx.mock
+def test_finetune_create_intensity_conforms(runner: CliRunner) -> None:
+    """GPUB-620: same training_intensity field via `gpb finetune create`."""
+    route = respx.post(f"{BASE}/training/runs").mock(
+        return_value=httpx.Response(200, json={"id": "run_i"})
+    )
+    res = runner.invoke(
+        app,
+        ["finetune", "create", "--preset", "qwen32b-lora-r16", "--intensity", "thorough"],
+    )
+    assert res.exit_code == 0, res.stderr
+    _conforms(route)
+
+
+@respx.mock
 def test_training_cancel_conforms(runner: CliRunner) -> None:
     route = respx.post(f"{BASE}/training/runs/run_abc/cancel").mock(
         return_value=httpx.Response(200, json={"id": "run_abc", "status": "cancelled"})

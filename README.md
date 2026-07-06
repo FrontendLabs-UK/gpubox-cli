@@ -183,13 +183,13 @@ lives at `https://api.gpubox.ai/docs`.
 | `gpb billing history`                | GET `/v1/billing/balance`     | reads `recent_topups` from balance                   |
 | `gpb billing topup --amount-gbp`     | POST `/v1/billing/checkout-sessions` | Stripe checkout (pence)                       |
 | `gpb billing topup --amount-ngn`     | POST `/v1/billing/paystack/initialize` | Paystack checkout (kobo)                    |
-| `gpb training submit`                | POST `/v1/training/runs`      | idempotent; vault corpus (`--since`/`--until`); tunables via `hyperparams` |
+| `gpb training submit`                | POST `/v1/training/runs`      | idempotent; vault corpus (`--since`/`--until`); `--intensity quick\|standard\|thorough` (LoRA training effort); tunables via `hyperparams` |
 | `gpb training list`                  | GET `/v1/training/runs`       | `--status` filter, `--limit`                         |
 | `gpb training status <run_id>`       | GET `/v1/training/runs/{run_id}` |                                                  |
 | `gpb training watch <run_id>`        | GET `/v1/training/runs/{run_id}` | polls every `--interval` seconds                  |
 | `gpb training download <run_id>`     | GET `/v1/training/runs/{run_id}/download` | JSON `{url,…}`; CLI fetches the signed URL → disk, verifies sha256 |
 | `gpb training cancel <run_id>`       | POST `/v1/training/runs/{run_id}/cancel` |                                            |
-| `gpb training presets`               | GET `/v1/training/presets`    | available presets (name, base, VRAM, est GPU-seconds) |
+| `gpb training presets`               | GET `/v1/training/presets`    | available presets (name, base, VRAM, est GPU-seconds, `default_intensity`) + the intensity catalog |
 | `gpb hosting list`                   | GET `/v1/hosting/models`      |                                                      |
 | `gpb hosting promote <run_id>`       | POST `/v1/hosting/models`     | idempotent; required `--name`; `--tier cold/warm/always_hot` |
 | `gpb hosting tier <model_id>`        | POST `/v1/hosting/models/{model_id}/transition` | body `{hosting_tier}`                  |

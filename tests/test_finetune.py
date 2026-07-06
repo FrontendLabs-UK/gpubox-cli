@@ -110,6 +110,20 @@ def test_create_omits_hyperparams_when_no_overrides(monkeypatch):
     assert "hyperparams" not in stub.calls[0]["json_body"]
 
 
+def test_create_sends_intensity_top_level(monkeypatch):
+    """GPUB-620: --intensity is a TOP-LEVEL training_intensity field, not nested
+    under hyperparams."""
+    with _patch_client(monkeypatch, [{"id": "run-1"}]) as stub:
+        res = runner.invoke(
+            ft_cmd.app,
+            ["create", "--preset", "qwen32b-lora-r16", "--intensity", "quick"],
+        )
+    assert res.exit_code == 0, res.output
+    body = stub.calls[0]["json_body"]
+    assert body == {"preset": "qwen32b-lora-r16", "training_intensity": "quick"}
+    assert "hyperparams" not in body
+
+
 def test_create_never_sends_forbidden_keys(monkeypatch):
     """Regression: the gateway's TrainingRunCreate is extra='forbid'. The body
     must NOT carry the legacy/flat keys dataset/name/epochs/batch_size/
