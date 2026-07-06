@@ -69,6 +69,53 @@ def test_submit_nests_overrides_under_hyperparams(runner: CliRunner) -> None:
         assert forbidden not in sent
 
 
+@respx.mock
+def test_submit_sends_intensity_top_level(runner: CliRunner) -> None:
+    """GPUB-620: --intensity is a TOP-LEVEL field (training_intensity), NOT nested
+    under hyperparams; it coexists with a preset and passes through verbatim."""
+    route = respx.post(f"{BASE}/training/runs").mock(
+        return_value=httpx.Response(200, json={"id": "run_i"})
+    )
+    result = runner.invoke(
+        app,
+        ["training", "submit", "--preset", "qwen32b-lora-r16", "--intensity", "thorough"],
+    )
+    assert result.exit_code == 0, result.stderr
+    sent = json.loads(route.calls.last.request.read())
+    assert sent == {"preset": "qwen32b-lora-r16", "training_intensity": "thorough"}
+    assert "hyperparams" not in sent  # not nested
+
+
+@respx.mock
+def test_presets_render_intensities(runner: CliRunner) -> None:
+    """GPUB-620: `training presets` shows per-preset default_intensity and the
+    intensity catalog (name/steps/lr, default flagged)."""
+    respx.get(f"{BASE}/training/presets").mock(
+        return_value=httpx.Response(200, json={
+            "data": [
+                {"name": "qwen32b-lora-r16", "model_base": "Qwen", "min_vram_gb": 24,
+                 "estimated_gpu_seconds": 3600, "default_intensity": "standard"},
+                {"name": "qwen32b-smoke", "model_base": "Qwen", "min_vram_gb": 24,
+                 "estimated_gpu_seconds": 120, "default_intensity": None},
+            ],
+            "intensities": [
+                {"name": "quick", "max_train_steps": 100, "learning_rate": 0.0002, "is_default": False},
+                {"name": "standard", "max_train_steps": 250, "learning_rate": 0.0002, "is_default": True},
+                {"name": "thorough", "max_train_steps": 500, "learning_rate": 0.0003, "is_default": False},
+            ],
+        })
+    )
+    result = runner.invoke(app, ["training", "presets"])
+    assert result.exit_code == 0, result.stderr
+    assert "default_intensity=standard" in result.stdout
+    # a null default_intensity (preset pins its own steps) renders as `none`,
+    # not dropped — that's a real signal.
+    assert "default_intensity=none" in result.stdout
+    assert "intensities (--intensity):" in result.stdout
+    assert "standard" in result.stdout and "(default)" in result.stdout
+    assert "steps=500" in result.stdout
+
+
 def test_submit_rejects_dataset_flag(runner: CliRunner) -> None:
     """--dataset was removed (GPUB-458) — usage error, not a gateway 422."""
     result = runner.invoke(

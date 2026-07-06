@@ -62,6 +62,15 @@ def _build_hyperparams(
 def submit(
     ctx: typer.Context,
     preset: str = typer.Option(..., "--preset", help="Factory preset (e.g. deberta-base)."),
+    intensity: str | None = typer.Option(
+        None,
+        "--intensity",
+        help=(
+            "Training effort for LoRA presets: quick | standard | thorough. Maps to a "
+            "target optimizer-STEP count + LR (higher = more visible tuning). Omit to "
+            "inherit the preset's default_intensity. Ignored by fixed-epoch presets."
+        ),
+    ),
     since: str | None = typer.Option(
         None,
         "--since",
@@ -86,9 +95,19 @@ def submit(
     narrow that corpus window; there is no client-supplied dataset URL. Per-run
     tunables nest under `hyperparams` (the gateway shallow-merges over the preset
     defaults). TrainingRunCreate is extra='forbid', so no other top-level keys.
+
+    GPUB-620: `--intensity` (quick|standard|thorough) is the simple lever for how
+    hard to train a LoRA preset — it sets a target optimizer-step count + LR. An
+    explicit `--epochs`/`--learning-rate` still overrides it. The gateway is the
+    source of truth for valid intensities (see `gpb training presets`).
     """
     out = _output(ctx)
     body: dict = {"preset": preset}
+    # Pass the string through verbatim (gateway is the source of truth for valid
+    # values). `is not None` — not truthiness — so an explicit `--intensity ""`
+    # reaches the gateway to be rejected rather than silently applying the default.
+    if intensity is not None:
+        body["training_intensity"] = intensity
     if since:
         body["since"] = since
     if until:
@@ -286,8 +305,26 @@ def presets(ctx: typer.Context) -> None:
         emit_text(out, "(no presets)")
         return
     for p in items:
+        # GPUB-620: always surface default_intensity so the caller sees what a
+        # bare submit will do. `none` is a REAL signal (the preset pins its own
+        # steps or is a fixed-epoch kind), so render it explicitly rather than
+        # dropping the field.
+        di = p.get("default_intensity")
         emit_text(
             out,
             f"{p.get('name')}  base={p.get('model_base')}  "
-            f"min_vram={p.get('min_vram_gb')}GB  est={p.get('estimated_gpu_seconds')}s",
+            f"min_vram={p.get('min_vram_gb')}GB  est={p.get('estimated_gpu_seconds')}s  "
+            f"default_intensity={di if di else 'none'}",
         )
+    # GPUB-620: the intensity catalog (how --intensity maps to steps + LR).
+    intensities = resp.get("intensities", []) if isinstance(resp, dict) else []
+    if intensities:
+        emit_text(out, "")
+        emit_text(out, "intensities (--intensity):")
+        for i in intensities:
+            star = " (default)" if i.get("is_default") else ""
+            emit_text(
+                out,
+                f"  {i.get('name'):<9} steps={i.get('max_train_steps')} "
+                f"lr={i.get('learning_rate')}{star}",
+            )
