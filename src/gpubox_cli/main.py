@@ -38,10 +38,10 @@ from gpubox_cli.commands import (
     profile_cmd,
     search,
     training,
-    webhooks,
     transcribe,
     users,
     vault,
+    webhooks,
     workspace,
 )
 from gpubox_cli.commands import auth as auth_cmd
