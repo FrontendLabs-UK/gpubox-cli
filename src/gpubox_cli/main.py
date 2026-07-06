@@ -38,6 +38,7 @@ from gpubox_cli.commands import (
     profile_cmd,
     search,
     training,
+    upload,
     webhooks,
     transcribe,
     users,
@@ -139,6 +140,7 @@ app.add_typer(users.app, name="users", help="Users, invites, OIDC clients.")
 # are the most common surface; users muscle-memory `gpb chat "..."`.
 app.command("chat", help="One-shot chat completion or interactive REPL.")(chat.run)
 app.command("embed", help="Embed text and emit a vector.")(embed.run)
+app.command("upload", help="Upload a document into your hardened Vault and watch it index (V1.6).")(upload.run)
 app.command("transcribe", help="Transcribe an audio file via Whisper.")(transcribe.run)
 app.command("signup", help="Open the signup page in a browser.")(auth_cmd.signup_command)
 
